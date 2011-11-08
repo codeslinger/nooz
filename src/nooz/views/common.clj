@@ -26,8 +26,7 @@
     [:div.container
      [:div.content
       [:div.page-header
-       [:h1 "Headlines "
-        [:small "All the news that fit to squint"]]]
+       [:h1 "Top Headlines"]]
       [:div.row
        [:div.span10
         [:h2 content]]
