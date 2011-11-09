@@ -34,4 +34,7 @@
   server-config
   (swap! server-config assoc :port 8081)
   (restart-server!)
-  (-main :dev))
+  (-main :dev)
+  (db/migrate :down 0)
+  (db/migrate)
+  )

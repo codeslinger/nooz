@@ -3,7 +3,7 @@
         [hiccup.page-helpers :only [include-css html5 link-to]]
         [hiccup.form-helpers :only [form-to text-field password-field]]))
 
-(defpartial layout [& content]
+(defpartial layout [page-name & content]
   (html5
    [:head
     [:title "Nooz"]
@@ -26,12 +26,10 @@
     [:div.container
      [:div.content
       [:div.page-header
-       [:h1 "Top Headlines"]]
+       [:h1 page-name]]
       [:div.row
-       [:div.span10
-        [:h2 content]]
-       [:div.span4
-        [:h3 "Secondary content"]]]]
+       [:div.span14
+        [:h2 content]]]]
      [:footer
       [:p "&copy; 2011 "
        (link-to "http://cbcg.net/" "Cipher Block Chain Gang")]]]]))
