@@ -1,6 +1,6 @@
 (ns nooz.server
   (:require [noir.server :as server]
-            [rn.clorine :as cl]
+            [rn.clorine.core :as cl]
             [clojure.contrib.sql :as sql]
             [nooz.db :as db]))
 
@@ -16,9 +16,11 @@
 (defn restart-server! []
   (stop-server!)
   (server/load-views "src/nooz/views/")
-  (swap! server-config
-         assoc
-         :server (server/start (@server-config :port) (@server-config :mode))))
+  (let [cfg @server-config]
+   (swap! server-config
+          assoc
+          :server (server/start (:port cfg) (:mode cfg)))))
+
 
 (defn -main [& m]
   (let [mode (keyword (or (first m) :dev))
@@ -35,5 +37,6 @@
 (comment
   (stop-server!)
   server-config
+  (swap! server-config assoc :port 8081)
   (restart-server!)
   (-main :dev))
