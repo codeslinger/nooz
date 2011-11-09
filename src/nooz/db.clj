@@ -1,22 +1,22 @@
 (ns nooz.db
-  (:require [rn.clorine :as cl]
+  (:require [rn.clorine.core :as cl]
             [nooz.migrations :as migrations])
-  (:use (clojure.contrib
-         [sql :only (insert-values
+  (:use [clojure.contrib
+         [sql :only [insert-values
                      delete-rows
                      do-commands
                      create-table
                      drop-table
                      transaction
-                     with-query-results)]
-         [logging :only (info warn)]
-         [core :only (.?.)]
-         [java-utils :only (as-str)]))
+                     with-query-results]]
+         [logging :only [info warn]]
+         [core :only [.?.]]
+         [java-utils :only [as-str]]])
   (:import (java.sql SQLException)))
 
 (defn- execute-migration [direction]
   (fn [[version {migration-fn direction
-                 doc :doc]]
+                 doc          :doc}]]
        (info (str (direction {:up "Applying migration "
                               :down "Undoing migration "})
                   version " " doc))
@@ -49,7 +49,7 @@
 
 (defn migrate
   "Pass it :up or :down and a version to which to migrate. If no arguments are supplied, we assume application of all migrations."
-  ([] (migrate :up (count migrations)))
+  ([] (migrate :up (count migrations/migrations)))
   ([direction to]
      (cl/with-connection :main
        (when (= :up direction)
