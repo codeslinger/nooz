@@ -1,7 +1,5 @@
 (ns nooz.server
   (:require [noir.server :as server]
-            [rn.clorine.core :as cl]
-            [clojure.contrib.sql :as sql]
             [nooz.db :as db]))
 
 (def server-config
@@ -17,10 +15,7 @@
   (stop-server!)
   (server/load-views "src/nooz/views/")
   (let [cfg @server-config]
-   (swap! server-config
-          assoc
-          :server (server/start (:port cfg) (:mode cfg)))))
-
+    (swap! server-config assoc :server (server/start (:port cfg) (:mode cfg)))))
 
 (defn -main [& m]
   (let [mode (keyword (or (first m) :dev))
