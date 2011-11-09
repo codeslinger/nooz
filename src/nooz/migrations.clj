@@ -1,4 +1,15 @@
-(ns nooz.migrations)
+(ns nooz.migrations
+  (:use [clojure.contrib
+         [sql :only [insert-values
+                     delete-rows
+                     do-commands
+                     create-table
+                     drop-table
+                     transaction
+                     with-query-results]]
+         [logging :only [info warn]]
+         [core :only [.?.]]
+         [java-utils :only [as-str]]]))
 
 (def migrations
      (sorted-map
