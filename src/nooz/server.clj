@@ -17,15 +17,18 @@
   (let [cfg @server-config]
     (swap! server-config assoc :server (server/start (:port cfg) (:mode cfg)))))
 
-(defn -main [& m]
-  (let [mode (keyword (or (first m) :dev))
-        port (Integer. (get (System/getenv) "PORT" "8080"))]
+(defn setup-db []
     (db/connect-db {:driver-class-name "org.postgresql.Driver"
                     :user "nooz"
                     :password "nooz"
                     :url "jdbc:postgresql://localhost:5432/nooz"
                     :max-active 4})
-    (db/migrate)
+    (db/migrate))
+
+(defn -main [& m]
+  (let [mode (keyword (or (first m) :dev))
+        port (Integer. (get (System/getenv) "PORT" "8080"))]
+    (setup-db)
     (swap! server-config assoc :port port :mode mode)
     (restart-server!)))
 
