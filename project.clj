@@ -5,6 +5,7 @@
             :dependencies [[org.clojure/clojure "1.2.1"]
                            [org.clojure/clojure-contrib "1.2.0"]
                            [postgresql "9.1-901.jdbc4"]
+                           [org.mindrot/jbcrypt "0.3m"]
                            [com.relaynetwork/clorine "1.0.6-SNAPSHOT"]
                            [noir "1.2.1"]]
             :main nooz.server)
