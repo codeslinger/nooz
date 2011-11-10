@@ -36,21 +36,17 @@
 ;;
 
 (defpage "/login" []
-  (common/two-col-page
+  (common/layout
    "Login"
-   [:div.span4
-    [:h3 "Don't have a login?"]
-    [:button.success.btn "Sign up!"]]
-   [:div.span10
-    (form-to [:post "/login"]
-      [:fieldset
-       [:div.clearfix
-        (label "username" "Username")
-        [:div.input (text-field {:class "span6"} "username")]]
-       [:div.clearfix
-        (label "password" "Password")
-        [:div.input (password-field {:class "span6"} "password")]]
-       [:div.actions [:button.primary.btn "Login"]]])]))
+   (form-to [:post "/login"]
+     [:fieldset
+      [:div.clearfix
+       (label "username" "Username")
+       [:div.input (text-field {:class "span6"} "username")]]
+      [:div.clearfix
+       (label "password" "Password")
+       [:div.input (password-field {:class "span6"} "password")]]
+      [:div.actions [:button.primary.btn "Login"]]])))
 
 (defpage [:post "/login"] {:keys [username password]}
   (str "You attempted to log in as " username " with the password " password))
