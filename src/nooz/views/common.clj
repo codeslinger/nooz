@@ -3,7 +3,7 @@
         [hiccup.page-helpers :only [include-css html5 link-to]]
         [hiccup.form-helpers :only [form-to text-field password-field]]))
 
-(defpartial layout [page-name & content]
+(defpartial page-wrapper [& body]
   (html5
    [:head
     [:title "Nooz"]
@@ -15,21 +15,29 @@
       [:div.container
        (link-to {:class "brand"} "/" "Nooz")
        [:ul.nav
-        [:li.active (link-to "/" "Top")]
+        [:li (link-to "/" "Top")]
         [:li (link-to "/latest" "Latest")]
         [:li (link-to "/submit" "Submit")]
         [:li (link-to "/about" "About")]]
-       (form-to {:class "pull-right"} [:post "/login"]
-        (text-field {:class "input-small" :placeholder "Username"} "username")
-        (password-field {:class "input-small" :placeholder "Password"} "password")
-        [:button.btn "Sign in"])]]]
+       [:span.pull-right
+        [:ul.nav
+         [:li (link-to "/register" "Sign Up")]
+         [:li (link-to "/login" "Login")]]]]]]
     [:div.container
-     [:div.content
-      [:div.page-header
-       [:h1 page-name]]
-      [:div.row
-       [:div.span14
-        [:h2 content]]]]
+     [:div.content body]
      [:footer
       [:p "&copy; 2011 "
        (link-to "http://cbcg.net/" "Cipher Block Chain Gang")]]]]))
+
+(defpartial layout [page-name & content]
+  (page-wrapper
+   [:div.page-header [:h1 page-name]]
+   [:div.row [:div.span14 [:h2 content]]]))
+
+(defpartial two-col-page [page-name sidebar & content]
+  (page-wrapper
+   [:div.page-header
+    [:h1 page-name]]
+   [:div.row
+    [:div.span10 [:h2 content]]
+    [:div.span4 [:h3 sidebar]]]))
