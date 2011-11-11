@@ -5,35 +5,37 @@
         [nooz.models.user :as user]))
 
 (defpartial page-wrapper [& body]
-  (html5
-   [:head
-    [:title "Nooz"]
-    (include-css "http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css")
-    (include-css "/css/style.css")]
-   [:body
-    [:div.topbar
-     [:div.fill
-      [:div.container
-       (link-to {:class "brand"} "/" "[nooz]")
-       [:ul.nav
-        [:li (link-to "/" "Top")]
-        [:li (link-to "/latest" "Latest")]
-        [:li (link-to "/submit" "Submit")]
-        [:li (link-to "/about" "About")]]
-       [:span.pull-right
-        (let [username (user/is-logged-in?)]
+  (let [username (user/is-logged-in?)]
+    (html5
+     [:head
+      [:title "Nooz"]
+      (include-css "http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css")
+      (include-css "/css/style.css")]
+     [:body
+      [:div.topbar
+       [:div.fill
+        [:div.container
+         (link-to {:class "brand"} "/" "[nooz]")
+         [:ul.nav
+          [:li (link-to "/" "Top")]
+          [:li (link-to "/latest" "Latest")]
+          (if (nil? username)
+            ""
+            [:li (link-to "/submit" "Submit")])
+          [:li (link-to "/about" "About")]]
+         [:span.pull-right
           (if (nil? username)
             [:ul.nav
              [:li (link-to "/register" "Sign Up")]
              [:li (link-to "/login" "Login")]]
             [:ul.nav
              [:li (link-to "/profile" username " (0)")]
-             [:li (link-to "/logout" "logout")]]))]]]]
-    [:div.container
-     [:div.content body]
-     [:footer
-      [:p "&copy; 2011 "
-       (link-to "http://cbcg.net/" "Cipher Block Chain Gang")]]]]))
+             [:li (link-to "/logout" "logout")]])]]]]
+      [:div.container
+       [:div.content body]
+       [:footer
+        [:p "&copy; 2011 "
+         (link-to "http://cbcg.net/" "Cipher Block Chain Gang")]]]])))
 
 (defpartial layout [page-name & content]
   (page-wrapper
