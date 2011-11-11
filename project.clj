@@ -4,8 +4,9 @@
             :dev-dependencies [[swank-clojure "1.4.0-SNAPSHOT"]]
             :dependencies [[org.clojure/clojure "1.2.1"]
                            [org.clojure/clojure-contrib "1.2.0"]
-                           [postgresql "9.1-901.jdbc4"]
                            [org.mindrot/jbcrypt "0.3m"]
-                           [com.relaynetwork/clorine "1.0.6-SNAPSHOT"]
-                           [noir "1.2.1"]]
+                           [postgresql "9.1-901.jdbc4"]
+                           [korma "0.2.1"]
+                           [noir "1.2.1"]
+                           [clj-time "0.3.2"]]
             :main nooz.server)

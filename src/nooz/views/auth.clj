@@ -1,77 +1,76 @@
 (ns nooz.views.auth
-  (:require [nooz.views.common :as common])
-  (:use [noir.core :only [defpage]]
+  (:require [nooz.views.common :as common]
+            [nooz.crypto :as crypto]
+            [noir.response :as resp]
+            [noir.validation :as vali]
+            [clojure.string :as string]
+            [nooz.models.user :as user])
+  (:use [noir.core :only [defpage defpartial render]]
         [hiccup.form-helpers :only [form-to
                                     label
                                     text-field
                                     password-field
-                                    drop-down]])
-  (:import org.mindrot.jbcrypt.BCrypt))
+                                    drop-down]]))
 
-;;
-;; Private functions
-;;
+(defpartial error-text [errors]
+  [:p.alert-message.error (string/join "<br/>" errors)])
 
-(defn- gen-salt
-  "Generate a salt for BCrypt's hashing routines."
-  ([]
-     (BCrypt/gensalt))
-  ([rounds]
-     (BCrypt/gensalt rounds)))
+(defpartial login-form [{:keys [username] :as usr}]
+  (form-to [:post "/login"]
+    (vali/on-error :username error-text)
+    [:fieldset
+     [:div.clearfix
+      (label "username" "Username")
+      [:div.input (text-field {:class "span6"} "username" username)]]
+     [:div.clearfix
+      (label "password" "Password")
+      [:div.input (password-field {:class "span6"} "password")]]
+     [:div.actions [:button.primary.btn "Login"]]]))
 
-(defn- gen-hash
-  "Hash the given string with a generated or supplied salt. Uses BCrypt hashing algorithm. The given salt (if supplied) needs to be in a format acceptable by BCrypt. Its recommended one use `gen-salt` for generating salts."
-  ([raw]
-     (gen-hash (gen-salt) raw))
-  ([salt raw]
-     (BCrypt/hashpw raw salt)))
+(defpartial registration-form [{:keys [username email password password-confirm] :as user}]
+  (form-to [:post "/register"]
+    (vali/on-error :username error-text)
+    (vali/on-error :email error-text)
+    (vali/on-error :password error-text)
+    [:fieldset
+     [:div.clearfix
+      (label "username" "Username")
+      [:div.input (text-field {:class "span6"} "username" username)]]
+     [:div.clearfix
+      (label "email" "Email")
+      [:div.input (text-field {:class "span6"} "email" email)]]
+     [:div.clearfix
+      (label "password" "Password")
+      [:div.input (password-field {:class "span6"} "password")]]
+     [:div.clearfix
+      (label "password-confirm" "Confirm Password")
+      [:div.input (password-field {:class "span6"} "password-confirm")]]
+     [:div.actions [:button.primary.btn "Sign Up"]]]))
 
-(defn- compare-hashes
-  "Compare a raw string with an already hashed string"
-  [raw hashed]
-  (BCrypt/checkpw raw hashed))
+(defpage "/login" {:as user}
+  (common/layout "Login" (login-form user)))
 
-;;
-;; Page controllers
-;;
+(defpage [:post "/login"] {:as user}
+  (if (user/login! user)
+    (resp/redirect "/")
+    (render "/login" user)))
 
-(defpage "/login" []
+(defpage "/confirm" []
   (common/layout
-   "Login"
-   (form-to [:post "/login"]
-     [:fieldset
-      [:div.clearfix
-       (label "username" "Username")
-       [:div.input (text-field {:class "span6"} "username")]]
-      [:div.clearfix
-       (label "password" "Password")
-       [:div.input (password-field {:class "span6"} "password")]]
-      [:div.actions [:button.primary.btn "Login"]]])))
+   "Thanks!"
+   [:h2 "Now, confirm your email address"]
+   [:p "Once you confirm your email address, your registration will be complete. Please head to your inbox now to reply. If you don't see the confirmation mesage in a few minutes, please check your spam folder."]))
 
-(defpage [:post "/login"] {:keys [username password]}
-  (str "You attempted to log in as " username " with the password " password))
+(defpage "/register" {:as user}
+  (common/layout "Sign Up" (registration-form user)))
 
-(defpage "/logout" []
-  (str "You have been logged out"))
+(defpage [:post "/register"] {:as user}
+  (if (user/register! user)
+    (resp/redirect "/confirm")
+    (render "/register" user)))
 
-(defpage "/register" []
-  (common/layout
-   "Sign Up"
-   (form-to [:post "/register"]
-     [:fieldset
-      [:div.clearfix
-       (label "username" "Username")
-       [:div.input (text-field {:class "span6"} "username")]]
-      [:div.clearfix
-       (label "email" "Email")
-       [:div.input (text-field {:class "span6"} "email")]]
-      [:div.clearfix
-       (label "password" "Password")
-       [:div.input (password-field {:class "span6"} "password")]]
-      [:div.clearfix
-       (label "password_confirm" "Confirm Password")
-       [:div.input (password-field {:class "span6"} "password_confirm")]]
-      [:div.actions [:button.primary.btn "Sign Up"]]])))
+(defpage "/logout" {}
+  (user/logout!)
+  (resp/redirect "/"))
 
-(defpage "/profile" []
-  (str "You have requested your profile"))
+

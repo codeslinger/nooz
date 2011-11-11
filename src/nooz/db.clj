@@ -1,6 +1,5 @@
 (ns nooz.db
-  (:require [rn.clorine.core :as cl]
-            [nooz.migrations :as migrations])
+  (:require [nooz.migrations :as migrations])
   (:use [clojure.contrib
          [sql :only [insert-values
                      delete-rows
@@ -8,11 +7,29 @@
                      create-table
                      drop-table
                      transaction
+                     with-connection
                      with-query-results]]
          [logging :only [info warn]]
          [core :only [.?.]]
-         [java-utils :only [as-str]]])
+         [java-utils :only [as-str]]]
+        [korma.db]
+        [korma.core])
   (:import (java.sql SQLException)))
+
+(defdb prod
+  (postgres {:db "nooz"
+             :host "localhost"
+             :port "5432"
+             :user "nooz"
+             :password "nooz"}))
+
+(defentity comments)
+(defentity replies)
+(defentity posts)
+(defentity users
+  (has-many posts)
+  (has-many comments)
+  (has-many replies))
 
 (defn- execute-migration [direction]
   (fn [[version {migration-fn direction
@@ -29,10 +46,11 @@
           (delete-rows :schema_versions ["version=?" version])))))
 
 (defn- run-migrations [direction from to]
-  (dorun (map (execute-migration direction)
-              (if (= :up direction)
-                (take (- to from) (nthnext migrations/migrations from))
-                (reverse (take (- from to) (nthnext migrations/migrations to)))))))
+  (dorun
+   (map (execute-migration direction)
+        (if (= :up direction)
+          (take (- to from) (nthnext migrations/migrations from))
+          (reverse (take (- from to) (nthnext migrations/migrations to)))))))
 
 (defn- create-schema-table-if-needed [direction to]
   (let [version-exists (or (with-query-results rs
@@ -54,9 +72,10 @@
 
 (defn migrate
   "Pass it :up or :down and a version to which to migrate. If no arguments are supplied, we assume application of all migrations."
-  ([] (migrate :up (last (keys migrations/migrations))))
+  ([]
+     (migrate :up (last (keys migrations/migrations))))
   ([direction to]
-     (cl/with-connection :main
+     (with-connection (get-connection prod)
        (when (= :up direction)
          (create-schema-table-if-needed direction to))
        (let [current-version (or (with-query-results rs
@@ -64,10 +83,3 @@
                                    (:version (first rs)))
                                  0)]
          (run-migrations direction current-version to)))))
-
-(defn connect-db
-  "Connect to a database with the given specification and an optional name. If no name is given, :main is used for the name."
-  ([info]
-     (cl/register-connection! :main info))
-  ([info name]
-     (cl/register-connection! name info)))
