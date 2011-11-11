@@ -1,11 +1,12 @@
 (ns nooz.views.common
+  (:require [noir.session :as session])
   (:use [noir.core :only [defpartial]]
         [hiccup.page-helpers :only [include-css html5 link-to]]
         [hiccup.form-helpers :only [form-to text-field password-field]]
         [nooz.models.user :as user]))
 
 (defpartial page-wrapper [& body]
-  (let [username (user/is-logged-in?)]
+  (let [username (session/get :username)]
     (html5
      [:head
       [:title "Nooz"]
@@ -19,8 +20,7 @@
          [:ul.nav
           [:li (link-to "/" "Top")]
           [:li (link-to "/latest" "Latest")]
-          (if (nil? username)
-            ""
+          (if (not (nil? username))
             [:li (link-to "/submit" "Submit")])
           [:li (link-to "/about" "About")]]
          [:span.pull-right

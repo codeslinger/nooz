@@ -1,6 +1,7 @@
 (ns nooz.views.toplevel
   (:require [nooz.views.common :as common]
-            [noir.response :as resp])
+            [noir.response :as resp]
+            [noir.session :as session])
   (:use [noir.core :only [defpage pre-route]]
         [hiccup.core :only [html]]
         [hiccup.page-helpers :only [link-to]]
@@ -12,7 +13,7 @@
         [nooz.models.user :as user]))
 
 (pre-route "/submit" {}
-           (when-not (user/is-logged-in?)
+           (when-not (session/get :username)
              (resp/redirect "/")))
 
 (defpage "/" []

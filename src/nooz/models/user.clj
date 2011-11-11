@@ -1,20 +1,13 @@
 (ns nooz.models.user
-  (:require [nooz.crypto :as crypto]
-            [noir.validation :as vali]
-            [noir.cookies :as cookie]
+  (:require [noir.validation :as vali]
+            [noir.session :as session]
             [clj-time.core :as time]
             [clj-time.format :as tf]
             [clj-time.coerce :as tc]
+            [nooz.crypto :as crypto]
             [nooz.db :as db])
   (:use korma.core)
   (:import java.sql.Timestamp))
-
-(def *secret-key* "DeAdBeEf")
-
-(defn get-user [id]
-  (first (select db/users
-           (where {:id id})
-           (limit 1))))
 
 (defn get-user-by-name [username]
   (first (select db/users
@@ -50,26 +43,10 @@
   (not (vali/errors? :username :email :password)))
 
 (defn create-session [username]
-  (cookie/put-signed! *secret-key* :nooz username))
-
-(defn destroy-session []
-  (cookie/put! :nooz ""))
-
-(defn get-user-from-session []
-  (let [username (cookie/get-signed *secret-key* :nooz)]
-    (if (nil? username)
-      nil
-      (get-user-by-name username))))
-
-(defn get-session-username []
-  (let [username (cookie/get-signed *secret-key* :nooz)]
-    username))
-
-(defn is-logged-in? []
-  (get-session-username))
+  (session/put! :username username))
 
 (defn logout! []
-  (destroy-session))
+  (session/clear!))
 
 (defn login! [{:keys [username password] :as user}]
   (let [user (get-user-by-name username)]

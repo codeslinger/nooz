@@ -1,9 +1,9 @@
 (ns nooz.views.auth
-  (:require [nooz.views.common :as common]
-            [nooz.crypto :as crypto]
-            [noir.response :as resp]
+  (:require [noir.response :as resp]
             [noir.validation :as vali]
             [clojure.string :as string]
+            [nooz.views.common :as common]
+            [nooz.crypto :as crypto]
             [nooz.models.user :as user])
   (:use [noir.core :only [defpage defpartial render]]
         [hiccup.form-helpers :only [form-to
