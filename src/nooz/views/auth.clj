@@ -15,6 +15,9 @@
 (defpartial error-text [errors]
   [:p.alert-message.error (string/join "<br/>" errors)])
 
+(defpartial success-text [messages]
+  [:p.alert-message.block-message.success (string/join "<br/>" messages)])
+
 (defpartial login-form [{:keys [username] :as usr}]
   (form-to [:post "/login"]
     (vali/on-error :username error-text)

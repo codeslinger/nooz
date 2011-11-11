@@ -53,13 +53,20 @@
   (cookie/put-signed! *secret-key* :nooz username))
 
 (defn destroy-session []
-  (cookie/put! :nooz nil))
+  (cookie/put! :nooz ""))
 
 (defn get-user-from-session []
   (let [username (cookie/get-signed *secret-key* :nooz)]
-    (if (username)
-      (get-user-by-name username)
-      nil)))
+    (if (nil? username)
+      nil
+      (get-user-by-name username))))
+
+(defn get-session-username []
+  (let [username (cookie/get-signed *secret-key* :nooz)]
+    username))
+
+(defn is-logged-in? []
+  (get-session-username))
 
 (defn logout! []
   (destroy-session))

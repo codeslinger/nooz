@@ -1,7 +1,8 @@
 (ns nooz.views.common
   (:use [noir.core :only [defpartial]]
         [hiccup.page-helpers :only [include-css html5 link-to]]
-        [hiccup.form-helpers :only [form-to text-field password-field]]))
+        [hiccup.form-helpers :only [form-to text-field password-field]]
+        [nooz.models.user :as user]))
 
 (defpartial page-wrapper [& body]
   (html5
@@ -13,16 +14,21 @@
     [:div.topbar
      [:div.fill
       [:div.container
-       (link-to {:class "brand"} "/" "Nooz")
+       (link-to {:class "brand"} "/" "[nooz]")
        [:ul.nav
         [:li (link-to "/" "Top")]
         [:li (link-to "/latest" "Latest")]
         [:li (link-to "/submit" "Submit")]
         [:li (link-to "/about" "About")]]
        [:span.pull-right
-        [:ul.nav
-         [:li (link-to "/register" "Sign Up")]
-         [:li (link-to "/login" "Login")]]]]]]
+        (let [username (user/is-logged-in?)]
+          (if (nil? username)
+            [:ul.nav
+             [:li (link-to "/register" "Sign Up")]
+             [:li (link-to "/login" "Login")]]
+            [:ul.nav
+             [:li (link-to "/profile" username " (0)")]
+             [:li (link-to "/logout" "logout")]]))]]]]
     [:div.container
      [:div.content body]
      [:footer
