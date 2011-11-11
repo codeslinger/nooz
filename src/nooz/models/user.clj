@@ -73,5 +73,7 @@
 
 (defn register! [{:as user}]
   (if (valid? user)
-    (create-user user)
+    (do
+      (create-user user)
+      (create-session (get user :username)))
     nil))

@@ -7,7 +7,7 @@
                       :up #(create-table :users
                                          [:id "BIGSERIAL"]
                                          [:username "VARCHAR(64) NOT NULL"]
-                                         [:password "VARCHAR(20) NOT NULL"]
+                                         [:password "VARCHAR(64) NOT NULL"]
                                          [:email "VARCHAR(256) NOT NULL"]
                                          [:created_at "TIMESTAMP NOT NULL"]
                                          [:verified_at "TIMESTAMP"])

@@ -1,5 +1,6 @@
 (ns nooz.db
-  (:require [nooz.migrations :as migrations])
+  (:require [nooz.migrations :as migrations]
+            [nooz.crypto :as crypto])
   (:use [clojure.contrib
          [sql :only [insert-values
                      delete-rows
@@ -27,6 +28,9 @@
 (defentity replies)
 (defentity posts)
 (defentity users
+  (prepare
+   (fn [{password :password :as user}]
+     (assoc user :password (crypto/gen-hash password))))
   (has-many posts)
   (has-many comments)
   (has-many replies))
