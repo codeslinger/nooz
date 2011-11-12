@@ -22,7 +22,8 @@
      (:port cfg)
      {:mode (:mode cfg)
       :session-store (cookie-store {:key *secret-key*})
-      :session-cookie-attrs {:max-age 1209600}})))
+      :session-cookie-attrs {:max-age 1209600
+                             :http-only true}})))
 
 (defn restart-server! []
   (stop-server!)
