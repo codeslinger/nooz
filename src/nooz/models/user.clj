@@ -63,10 +63,13 @@
 
 (defn login! [{:keys [username password] :as user}]
   (let [user (get-user-by-name username)]
-    (if (and user
-             (crypto/compare-hashes password (get user :password)))
-      (create-session! username)
-      (vali/set-error :username "Invalid username or password"))))
+    (if (nil? user)
+      (vali/set-error :username "Invalid username or password")
+      (if (not (= "*confirmed*" (:confirmation_token user)))
+        (vali/set-error :username "You need to verify your email account before logging in. Please check your email for your confirmation link.")
+        (if (crypto/compare-hashes password (:password user))
+          (create-session! username)
+          (vali/set-error :username "Invalid username or password"))))))
 
 (defn logout! []
   (session/clear!))
