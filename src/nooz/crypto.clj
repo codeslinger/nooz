@@ -1,5 +1,7 @@
 (ns nooz.crypto
-  (:require [ring.util.codec :as codec])
+  (:require [ring.util.codec :as codec]
+            [clojure.string :as s]
+            [clojure.contrib.str-utils :as str])
   (:import org.mindrot.jbcrypt.BCrypt
            java.security.SecureRandom))
 
@@ -36,4 +38,12 @@
 
 (defn gen-confirmation-token []
   (let [hashbytes (gen-random-hash 16)]
-    (codec/url-encode (codec/base64-encode hashbytes))))
+    (codec/base64-encode hashbytes)))
+
+(defn wrap-web-safe [raw]
+  (s/replace (str/re-gsub #"/" "_" (str/re-gsub #"\+" "-" raw)) "=" ""))
+
+(defn unwrap-web-safe [wrapped]
+  (let [unwrapped (str/re-gsub #"-" "+" (str/re-gsub #"_" "/" wrapped))
+        eqs (seq (repeat (- 4 (rem (.length unwrapped) 4)) "="))]
+    (s/join (flatten [unwrapped eqs]))))

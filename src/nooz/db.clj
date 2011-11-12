@@ -28,9 +28,6 @@
 (defentity replies)
 (defentity posts)
 (defentity users
-  (prepare
-   (fn [{password :password :as user}]
-     (assoc user :password (crypto/gen-hash password))))
   (has-many posts)
   (has-many comments)
   (has-many replies))

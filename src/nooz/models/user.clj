@@ -12,10 +12,22 @@
   (:import java.sql.Timestamp))
 
 (defn get-user-by-name [username]
-  (first (select db/users (where {:username username}) (limit 1))))
+  (first
+   (select db/users
+     (where {:username username})
+     (limit 1))))
 
 (defn get-user-by-email [email]
-  (first (select db/users (where {:email email}) (limit 1))))
+  (first
+   (select db/users
+     (where {:email email})
+     (limit 1))))
+
+(defn get-user-by-token [token]
+  (first
+   (select db/users
+     (where {:confirmation_token token})
+     (limit 1))))
 
 (defn valid? [{:keys [username email password password-confirm] :as user}]
   (vali/rule (not (get-user-by-name username))
@@ -37,12 +49,17 @@
     (insert db/users
       (values {:username username
                :email email
-               :password password
+               :password (crypto/gen-hash password)
                :created_at created_at
                :confirmation_token (crypto/gen-confirmation-token)}))))
 
 (defn create-session! [username]
   (session/put! :username username))
+
+(defn confirm-account! [user]
+  (update db/users
+    (set-fields {:confirmation_token "*confirmed*"})
+    (where {:id [= (:id user)]})))
 
 (defn login! [{:keys [username password] :as user}]
   (let [user (get-user-by-name username)]
@@ -56,7 +73,7 @@
 
 (defn registration-message [user name host]
   (let [email (:email user)
-        token (:confirmation_token user)]
+        token (crypto/wrap-web-safe (:confirmation_token user))]
     {:from (<< "help@~{host}")
      :to email
      :subject (<< "~{host}: New ~{name} Account ~{email}")
@@ -74,14 +91,12 @@ this message or email help@~{host}.
 Thank you for using ~{name}!")}))
 
 (defn send-registration-confirmation! [user]
-  (mail/send-message (registration-message user
-                                           *app-name*
-                                           *app-host*)))
+  (mail/send-message
+   (registration-message user *app-name* *app-host*)))
 
 (defn register! [{:as user}]
   (if (valid? user)
-    (do
+    (let [username (:username user)]
       (create-user! user)
-      (create-session! (:username user))
-      (send-registration-confirmation! (get-user-by-name (:username user))))
+      (send-registration-confirmation! (get-user-by-name username)))
     nil))

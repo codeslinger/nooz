@@ -40,7 +40,10 @@
 (defpartial layout [page-name & content]
   (page-wrapper
    [:div.page-header [:h1 page-name]]
-   [:div.row [:div.span14 [:h2 content]]]))
+   [:div.row
+    [:div.span14
+     (session/flash-get)
+     [:h2 content]]]))
 
 (defpartial two-col-page [page-name sidebar & content]
   (page-wrapper
