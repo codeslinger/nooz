@@ -8,5 +8,6 @@
                            [postgresql "9.1-901.jdbc4"]
                            [korma "0.2.1"]
                            [noir "1.2.1"]
-                           [clj-time "0.3.2"]]
+                           [clj-time "0.3.2"]
+                           [com.draines/postal "1.6.0"]]
             :main nooz.server)

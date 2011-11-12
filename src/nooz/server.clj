@@ -3,6 +3,8 @@
             [nooz.db :as db])
   (:use ring.middleware.session.cookie))
 
+(def *app-host* "localhost:8080")
+(def *app-name* "Nooz")
 (def *secret-key* "DEADBEEFCAFEMOOP")
 
 (def server-config
@@ -20,8 +22,7 @@
      (:port cfg)
      {:mode (:mode cfg)
       :session-store (cookie-store {:key *secret-key*})
-      :session-cookie-attrs {:max-age 1209600
-                             :http-only true}})))
+      :session-cookie-attrs {:max-age 1209600}})))
 
 (defn restart-server! []
   (stop-server!)
@@ -37,10 +38,10 @@
 
 (comment
   (stop-server!)
+  (-main :dev)
   server-config
   (swap! server-config assoc :port 8081)
   (restart-server!)
-  (-main :dev)
   (db/migrate :down 0)
   (db/migrate)
   )

@@ -10,7 +10,7 @@
                                          [:password "VARCHAR(64) NOT NULL"]
                                          [:email "VARCHAR(256) NOT NULL"]
                                          [:created_at "TIMESTAMP NOT NULL"]
-                                         [:verified_at "TIMESTAMP"])
+                                         [:confirmation_token "VARCHAR(64)"])
                       :down #(drop-table :users)
                       }
       20111108113600 {:doc "create posts table"
