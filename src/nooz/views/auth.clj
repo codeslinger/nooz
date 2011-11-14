@@ -15,15 +15,9 @@
                                     password-field
                                     drop-down]]))
 
-(defpartial error-text [errors]
-  [:p.alert-message.error (string/join "<br/>" errors)])
-
-(defpartial success-text [messages]
-  [:p.alert-message.success (string/join "<br/>" messages)])
-
 (defpartial login-form [{:keys [username] :as usr}]
   (form-to [:post "/login"]
-    (vali/on-error :username error-text)
+    (vali/on-error :username common/error-text)
     [:fieldset
      [:div.clearfix
       (label "username" "Username")
@@ -35,9 +29,9 @@
 
 (defpartial registration-form [{:keys [username email password password-confirm] :as user}]
   (form-to [:post "/register"]
-    (vali/on-error :username error-text)
-    (vali/on-error :email error-text)
-    (vali/on-error :password error-text)
+    (vali/on-error :username common/error-text)
+    (vali/on-error :email common/error-text)
+    (vali/on-error :password common/error-text)
     [:fieldset
      [:div.clearfix
       (label "username" "Username")
@@ -55,8 +49,8 @@
 
 (defpartial user-account-form [{:as user}]
   (form-to [:post "/account"]
-    (vali/on-error :cur-password error-text)
-    (vali/on-error :password error-text)
+    (vali/on-error :cur-password common/error-text)
+    (vali/on-error :password common/error-text)
     [:fieldset
      [:div.clearfix
       (label "username" "Username")

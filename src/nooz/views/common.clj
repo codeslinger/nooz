@@ -1,9 +1,11 @@
 (ns nooz.views.common
-  (:require [noir.session :as session])
+  (:require [noir.session :as session]
+            [noir.validation :as vali]
+            [clojure.string :as string])
   (:use [noir.core :only [defpartial]]
         [hiccup.core :only [h]]
         [hiccup.page-helpers :only [include-css html5 link-to]]
-        [hiccup.form-helpers :only [form-to text-field password-field]]
+        [hiccup.form-helpers :only [form-to text-field password-field label]]
         [nooz.models.user :as user]
         [nooz.server :only [*app-name*]]))
 
@@ -46,3 +48,18 @@
     [:div.span14
      (session/flash-get)
      [:h2 content]]]))
+
+(defpartial error-text [errors]
+  [:p.alert-message.error (string/join "<br/>" errors)])
+
+(defpartial success-text [messages]
+  [:p.alert-message.success (string/join "<br/>" messages)])
+
+(defpartial error-inline [errors]
+  (if (not (nil? errors))
+    [:span.help-inline (string/join "<br/>" errors)]))
+
+(defpartial form-item [key title value]
+  [(if (vali/errors? key) :div.clearfix.error :div.clearfix)
+   (label (name key) title)
+   [:div.input value (vali/on-error key error-inline)]])

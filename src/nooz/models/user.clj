@@ -49,7 +49,6 @@
              [:email "Email address is in an invalid format."])
   (vali/rule (not (get-user-by-email email))
              [:email "That email address is already taken."])
-
   (not (vali/errors? :username :email :password)))
 
 (defn create-user! [{:keys [username email password] :as user}]
