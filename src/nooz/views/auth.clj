@@ -5,7 +5,9 @@
             [clojure.string :as string]
             [nooz.views.common :as common]
             [nooz.crypto :as crypto]
-            [nooz.models.user :as user])
+            [nooz.models.user :as user]
+            [clj-time.format :as tformat]
+            [clj-time.coerce :as tcoerce])
   (:use [noir.core :only [defpage defpartial render]]
         [hiccup.form-helpers :only [form-to
                                     label
@@ -51,8 +53,37 @@
       [:div.input (password-field {:class "span6"} "password-confirm")]]
      [:div.actions [:button.primary.btn "Sign Up"]]]))
 
+(defpartial user-account-form [{:as user}]
+  (form-to [:post "/account"]
+    (vali/on-error :cur-password error-text)
+    (vali/on-error :password error-text)
+    [:fieldset
+     [:div.clearfix
+      (label "username" "Username")
+      [:div.input [:span.uneditable-input (:username user)]]]
+     [:div.clearfix
+      (label "email" "Email")
+      [:div.input [:span.uneditable-input (:email user)]]]
+     [:div.clearfix
+      (label "created_at" "Member since")
+      [:div.input
+       [:span.uneditable-input
+        (tformat/unparse (tformat/formatters :rfc822) (tcoerce/from-date (:created_at user)))]]]
+     [:div.clearfix
+      (label "cur-password" "Current password")
+      [:div.input (password-field {:class "span6"} "cur-password")]]
+     [:div.clearfix
+      (label "password" "New password")
+      [:div.input (password-field {:class "span6"} "password")]]
+     [:div.clearfix
+      (label "password-confirm" "New password (again)")
+      [:div.input (password-field {:class "span6"} "password-confirm")]]
+     [:div.actions [:button.primary.btn "Update"]]]))
+
 (defpage "/login" {:as user}
-  (common/layout "Login" (login-form user)))
+  (common/layout
+   "Login"
+   (login-form user)))
 
 (defpage [:post "/login"] {:as user}
   (if (user/login! user)
@@ -69,7 +100,9 @@
     (render "/login")))
 
 (defpage "/register" {:as user}
-  (common/layout "Sign Up" (registration-form user)))
+  (common/layout
+   "Sign Up"
+   (registration-form user)))
 
 (defpage [:post "/register"] {:as user}
   (if (user/register! user)
@@ -82,4 +115,16 @@
   (user/logout!)
   (resp/redirect "/"))
 
+(defpage "/account" {}
+  (let [user (user/get-user-from-session)]
+    (common/layout
+     "Your Account"
+     (user-account-form user))))
 
+(defpage [:post "/account"] {:as provo}
+  (let [user (user/get-user-from-session)]
+    (if (user/update-account! user provo)
+      (do
+        (session/flash-put! (success-text ["Your account information has been updated."]))
+        (resp/redirect "/account"))
+      (render "/account" provo))))

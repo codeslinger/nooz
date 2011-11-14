@@ -1,6 +1,7 @@
 (ns nooz.views.common
   (:require [noir.session :as session])
   (:use [noir.core :only [defpartial]]
+        [hiccup.core :only [h]]
         [hiccup.page-helpers :only [include-css html5 link-to]]
         [hiccup.form-helpers :only [form-to text-field password-field]]
         [nooz.models.user :as user]
@@ -30,7 +31,7 @@
              [:li (link-to "/register" "Sign Up")]
              [:li (link-to "/login" "Login")]]
             [:ul.nav
-             [:li (link-to "/profile" username)]
+             [:li (link-to "/account" (h username))]
              [:li (link-to "/logout" "logout")]])]]]]
       [:div.container
        [:div.content body]
@@ -45,4 +46,3 @@
     [:div.span14
      (session/flash-get)
      [:h2 content]]]))
-

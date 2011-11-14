@@ -27,7 +27,20 @@
      (where {:confirmation_token token})
      (limit 1))))
 
-(defn valid? [{:keys [username email password password-confirm] :as user}]
+(defn get-user-from-session []
+  (let [user (get-user-by-name (session/get :username))]
+    user))
+
+(defn valid-new-password? [user {:keys [cur-password password password-confirm] :as provo}]
+  (vali/rule (crypto/compare-hashes cur-password (:password user))
+             [:cur-password "Current password is incorrect."])
+  (vali/rule (vali/min-length? password 6)
+             [:password "Password must be at least 6 characters."])
+  (vali/rule (= password password-confirm)
+             [:password "Passwords do not match."])
+  (not (vali/errors? :cur-password :password)))
+
+(defn valid-new-user? [{:keys [username email password password-confirm] :as user}]
   (vali/rule (not (get-user-by-name username))
              [:username "That username is already taken"])
   (vali/rule (vali/min-length? username 3)
@@ -36,10 +49,7 @@
              [:email "Email address is in an invalid format."])
   (vali/rule (not (get-user-by-email email))
              [:email "That email address is already taken."])
-  (vali/rule (vali/min-length? password 6)
-             [:password "Password must be at least 6 characters."])
-  (vali/rule (= password password-confirm)
-             [:password "Passwords do not match."])
+
   (not (vali/errors? :username :email :password)))
 
 (defn create-user! [{:keys [username email password] :as user}]
@@ -59,21 +69,27 @@
     (set-fields {:confirmation_token "*confirmed*"})
     (where {:id [= (:id user)]})))
 
+(defn update-account! [user provo]
+  (if (valid-new-password? user provo)
+    (update db/users
+      (set-fields {:password (crypto/gen-hash (:password provo))})
+      (where {:id [= (:id user)]}))))
+
 (defn login! [{:keys [username password] :as user}]
   (let [user (get-user-by-name username)]
     (if (nil? user)
-      (vali/set-error :username "Invalid username or password")
+      (vali/set-error :username "Invalid username or password.")
       (if (not (= "*confirmed*" (:confirmation_token user)))
-        (vali/set-error :username "You need to verify your email account before logging in. Please check your email for your confirmation link.")
+        (vali/set-error :username "You need to confirm your email account before logging in. Please check your email for your confirmation link.")
         (if (crypto/compare-hashes password (:password user))
           (create-session! username)
-          (vali/set-error :username "Invalid username or password"))))))
+          (vali/set-error :username "Invalid username or password."))))))
 
 (defn logout! []
   (session/clear!))
 
 (defn register! [{:as user}]
-  (if (valid? user)
+  (if (valid-new-user? user)
     (let [username (:username user)]
       (create-user! user)
       (mail/send-registration-message! (get-user-by-name username)))))
