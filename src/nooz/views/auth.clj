@@ -28,7 +28,12 @@
   (form-to [:post "/register"]
     [:fieldset
      (common/form-item :username "Username" (text-field {:class "span6"} "username" username))
-     (common/form-item :email "Email" (text-field {:class "span6"} "email" email))
+     [(if (vali/errors? :email) :div.clearfix.error :div.clearfix)
+      (label "email" "Email")
+      [:div.input
+       (text-field {:class "span6"} "email" email)
+       (vali/on-error :email common/error-inline)
+       [:span.help-block "Not visible on site. Used for Gravatar icon."]]]
      (common/form-item :password "Password" (password-field {:class "span6"} "password"))
      (common/form-item :password-confirm "Confirm password" (password-field {:class "span6"} "password-confirm"))
      [:div.actions [:button.primary.btn "Sign Up"]]]))

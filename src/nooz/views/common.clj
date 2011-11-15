@@ -60,7 +60,7 @@
   (if (not (nil? errors))
     [:span.help-inline (string/join "<br/>" errors)]))
 
-(defpartial form-item [key title value]
+(defpartial form-item [key title & value]
   [(if (vali/errors? key) :div.clearfix.error :div.clearfix)
    (label (name key) title)
    [:div.input value (vali/on-error key error-inline)]])
