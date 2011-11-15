@@ -48,7 +48,7 @@
    [:div.row
     [:div.span14
      (session/flash-get)
-     [:h2 content]]]))
+     content]]))
 
 (defpartial error-text [errors]
   [:p.alert-message.error (string/join "<br/>" errors)])

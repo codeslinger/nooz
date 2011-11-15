@@ -31,6 +31,14 @@
   (let [user (get-user-by-name (session/get :username))]
     user))
 
+(defn get-name-for-id [id]
+  (let [row (select db/users
+              (fields :username)
+              (where {:id id})
+              (limit 1))]
+    (if row
+      (:username (first row)))))
+
 (defn valid-password? [password password-confirm]
   (vali/rule (vali/min-length? password 6)
              [:password "Password must be at least 6 characters."])

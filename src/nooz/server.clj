@@ -39,10 +39,10 @@
 
 (comment
   (stop-server!)
+  (restart-server!)
   (-main :dev)
   server-config
   (swap! server-config assoc :port 8081)
-  (restart-server!)
   (db/migrate :down 0)
   (db/migrate)
   )

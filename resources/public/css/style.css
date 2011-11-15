@@ -48,3 +48,36 @@ body {
 .topbar .btn {
     border: 0;
 }
+
+.post {
+    padding: 8px 0 8px 10px;
+    font-family: Verdana, sans-serif;
+}
+
+.post a.title,
+.post a.title:visited {
+    font-size: 18px;
+    text-decoration: none;
+    color: #404040;
+}
+
+.post .dom,
+.post .subtext {
+    color: #BFBFBF;
+}
+
+.post .dom {
+    font-size: 14px;
+}
+
+.post .subtext {
+    font-size: 12px;
+    padding-left: 5px;
+}
+
+.post .subtext a,
+.post .subtext a:visited {
+    text-decoration: none;
+    font-weight: bold;
+    color: #BFBFBF;
+}
