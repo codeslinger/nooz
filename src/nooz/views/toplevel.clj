@@ -7,7 +7,8 @@
             [nooz.models.user :as user]
             [nooz.models.post :as post])
   (:use [noir.core :only [defpage pre-route defpartial render]]
-        [hiccup.core :only [html]]
+        [hiccup.core :only [html
+                            h]]
         [hiccup.page-helpers :only [link-to]]
         [hiccup.form-helpers :only [form-to
                                     label
@@ -19,39 +20,41 @@
 (defpartial new-post-form [{:keys [title url expiry] :as post}]
   (form-to [:post "/submit"]
     [:fieldset
-     (common/form-item :title "Title"
-                       (text-field {:class "span6"} "title" title))
-     (common/form-item :url "URL"
-                       (text-field {:class "span6"} "url" url))
+     (common/form-item :title "Title" (text-field {:class "span6"} "title" title))
+     (common/form-item :url "URL" (text-field {:class "span6"} "url" url))
      (common/form-item :expiry "Comments close in"
-                       (drop-down {:class "small"} "expiry"
+                       (drop-down {:class "small"}
+                                  "expiry"
                                   post/*valid-expiry-times*
                                   (Integer. (or expiry 0))))
      [:div.actions [:button.primary.btn "Submit"]]]))
 
 (pre-route "/submit" {}
            (when-not (user/get-user-from-session)
-             (do
-               (session/flash-put!
-                (common/error-text ["You must be logged in to submit a headline."]))
-               (resp/redirect "/"))))
+             (common/borked "You must be logged in to submit a headline.")))
 
-(defpage "/" []
+(defpage "/" {}
   (common/layout "Top Headlines" ""))
 
-(defpage "/latest" []
+(defpage "/latest" {}
   (common/layout "Latest Headlines" ""))
+
+(defpage "/item/:id" {:keys [id]}
+  (let [post (post/get-post-by-id (Integer. id))]
+    (if post
+      (common/layout "Headline Details" "")
+      (common/borked "Sorry, we could not find the requested item."))))
 
 (defpage [:get "/submit"] {:as post}
   (common/layout "Submit a headline" (new-post-form post)))
 
 (defpage [:post "/submit"] {:as post}
-  (if (post/create-post! post (user/get-user-from-session))
-    (resp/redirect "/latest")
-    (do
-      (session/flash-put!
-       (common/error-text ["There were some problems with your submission."]))
-      (render "/submit" post))))
+  (let [post (post/create-post! post (user/get-user-from-session))]
+    (if-not (nil? post)
+      (resp/redirect (str "/item/" (:id post)))
+      (do
+        (common/boo! "There were some problems with your submission.")
+        (render "/submit" post)))))
 
 (defpage "/about" []
   (common/layout

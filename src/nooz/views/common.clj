@@ -1,7 +1,8 @@
 (ns nooz.views.common
   (:require [noir.session :as session]
             [noir.validation :as vali]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [noir.response :as resp])
   (:use [noir.core :only [defpartial]]
         [hiccup.core :only [h]]
         [hiccup.page-helpers :only [include-css html5 link-to]]
@@ -63,3 +64,14 @@
   [(if (vali/errors? key) :div.clearfix.error :div.clearfix)
    (label (name key) title)
    [:div.input value (vali/on-error key error-inline)]])
+
+(defn boo! [msg]
+  (session/flash-put! (error-text [msg])))
+
+(defn yay! [msg]
+  (session/flash-put! (success-text [msg])))
+
+(defn borked [msg]
+  (boo! msg)
+  (resp/redirect "/"))
+

@@ -31,13 +31,17 @@
   (let [user (get-user-by-name (session/get :username))]
     user))
 
-(defn valid-new-password? [user {:keys [cur-password password password-confirm] :as provo}]
-  (vali/rule (crypto/compare-hashes cur-password (:password user))
-             [:cur-password "Current password is incorrect."])
+(defn valid-password? [password password-confirm]
   (vali/rule (vali/min-length? password 6)
              [:password "Password must be at least 6 characters."])
   (vali/rule (= password password-confirm)
              [:password "Passwords do not match."])
+  (not (vali/errors? :password)))
+
+(defn valid-new-password? [user {:keys [cur-password password password-confirm] :as provo}]
+  (vali/rule (crypto/compare-hashes cur-password (:password user))
+             [:cur-password "Current password is incorrect."])
+  (valid-password? password password-confirm)
   (not (vali/errors? :cur-password :password)))
 
 (defn valid-new-user? [{:keys [username email password password-confirm] :as user}]
@@ -49,6 +53,7 @@
              [:email "Email address is in an invalid format."])
   (vali/rule (not (get-user-by-email email))
              [:email "That email address is already taken."])
+  (valid-password? password password-confirm)
   (not (vali/errors? :username :email :password)))
 
 (defn create-user! [{:keys [username email password] :as user}]
