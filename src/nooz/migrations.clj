@@ -1,5 +1,7 @@
 (ns nooz.migrations
-  (:use [clojure.contrib [sql :only [create-table drop-table]]]))
+  (:use [clojure.contrib [sql :only [create-table
+                                     drop-table
+                                     do-commands]]]))
 
 (def migrations
      (sorted-map
@@ -40,5 +42,11 @@
                                          [:user_id "BIGINT NOT NULL"]
                                          [:created_at "TIMESTAMP NOT NULL"])
                       :down #(drop-table :comments)
+                      }
+      20111115141358 {:doc "add Gravatar hash and about fields to users table"
+                      :up #(do-commands "ALTER TABLE users ADD COLUMN gravatar_hash CHAR(32)"
+                                        "ALTER TABLE users ADD COLUMN about VARCHAR(256)")
+                      :down #(do-commands "ALTER TABLE users DROP COLUMN about"
+                                          "ALTER TABLE users DROP COLUMN gravatar_hash")
                       }
       ))

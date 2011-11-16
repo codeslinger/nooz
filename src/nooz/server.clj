@@ -33,11 +33,11 @@
 (defn -main [& m]
   (let [mode (keyword (or (first m) :dev))
         port (Integer. (get (System/getenv) "PORT" "8080"))]
-    (db/migrate)
     (swap! server-config assoc :port port :mode mode)
     (restart-server!)))
 
 (comment
+  (db/migrate!)
   (stop-server!)
   (restart-server!)
   (-main :dev)
