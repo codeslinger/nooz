@@ -65,6 +65,9 @@
     [:span " "]
     [:span "(" (link-to (str "/post/" id) "0 replies") ")"]]])
 
+(defpartial post-list [time posts]
+  (map #(post-list-item %1 time) posts))
+
 (pre-route "/submit" {}
            (when-not (user/get-user-from-session)
              (common/borked "You must be logged in to submit a headline.")))
@@ -75,8 +78,7 @@
 (defpage "/latest" {}
   (common/layout
    "Latest Headlines"
-   (let [now (tc/to-long (time/now))]
-     (map #(post-list-item %1 now) (post/get-latest-posts)))))
+   (post-list (tc/to-long (time/now)) (post/get-latest-posts))))
 
 (defpage "/item/:id" {:keys [id]}
   (let [post (post/get-post-by-id (Integer. id))]
