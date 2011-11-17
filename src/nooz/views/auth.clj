@@ -17,6 +17,7 @@
         [hiccup.form-helpers :only [form-to
                                     label
                                     text-field
+                                    text-area
                                     password-field
                                     drop-down]]))
 
@@ -56,6 +57,7 @@
      [:div.actions [:button.primary.btn "Sign Up"]]]))
 
 (defpartial profile-edit-form-parts [{:as user}]
+  [:hr]
   [:div.row
    [:div.span5
     [:table.bordered-table
@@ -63,35 +65,43 @@
       [:td [:strong "Email"]]
       [:td (:email user)]]]]
    [:div
-    (link-to {:class "email-button"}
+    (link-to {:class "side-button"}
              (str (profile-link user) "/email")
              [:button.btn.small "Update"])]]
   [:ul
-   [:li (link-to (str (profile-link user) "/password")
-                 [:button.btn "Change password"])]])
+   [:li
+    (link-to (str (profile-link user) "/password")
+             [:button.btn "Change password"])]])
 
 (defpartial profile-view [{:as user}]
-  [:div.profile
-   [:div.profile-head
-    [:span.avatar [:img {:src (user/gravatar-url user)
-                         :height 48
-                         :width 48}]]
-    [:h2 (h (:username user))]]
-   (if (:about user)
-     [:pre (:about user)])
-   [:div.span5
-    [:table.bordered-table
-     [:tr
-      [:td [:strong "Member for"]]
-      [:td (common/human-time (:created_at user))]]
-     [:tr
-      [:td [:strong "Submissions"]]
-      [:td (link-to (str (profile-link user) "/submissions") "0")]]
-     [:tr
-      [:td [:strong "Comments"]]
-      [:td (link-to (str (profile-link user) "/comments") "0")]]]]
-   (if (= (session/get :username) (:username user))
-     (profile-edit-form-parts user))])
+  (let [my-user (= (session/get :username) (:username user))]
+    [:div.profile
+     [:div.profile-head
+      [:span.avatar [:img {:src (user/gravatar-url user)
+                           :height 48
+                           :width 48}]]
+      [:h2 (h (:username user))]]
+     (if (:about user)
+       [:div.row
+        [:div.span10
+         [:pre (:about user)]]
+       (if my-user
+         [:div (link-to {:class "side-button"}
+                        (str (profile-link user) "/about")
+                        [:button.btn.small "Update"])])])
+     [:div.span5
+      [:table.bordered-table
+       [:tr
+        [:td [:strong "Member for"]]
+        [:td (common/human-time (:created_at user))]]
+       [:tr
+        [:td [:strong "Submissions"]]
+        [:td (link-to (str (profile-link user) "/submissions") "0")]]
+       [:tr
+        [:td [:strong "Comments"]]
+        [:td (link-to (str (profile-link user) "/comments") "0")]]]]
+     (if my-user
+       (profile-edit-form-parts user))]))
 
 (defpartial email-change-form [{:keys [email] :as user}]
   (form-to [:post (str (profile-link) "/email")]
@@ -113,6 +123,13 @@
                        (password-field {:class "span6"} "password"))
      (common/form-item :password-confirm "New password (again)"
                        (password-field {:class "span6"} "password-confirm"))
+     [:div.actions [:button.primary.btn "Update"]]]))
+
+(defpartial about-form [{:keys [about] :as provo}]
+  (form-to [:post (str (profile-link) "/about")]
+    [:fieldset
+     (common/form-item :about "About"
+                       (text-area {:class "span8"} "about" about))
      [:div.actions [:button.primary.btn "Update"]]]))
 
 (defpage "/login" {:as user}
@@ -158,7 +175,7 @@
   (let [user (user/get-user-by-name username)]
     (common/layout "Profile" (profile-view user))))
 
-(defpage [:get "/user/:un/email"] {:as args}
+(defpage "/user/:un/email" {:as args}
   (if (= (:un args) (session/get :username))
     (common/layout "Change email address" (email-change-form args))
     (common/borked "You cannot modify that user's account.")))
@@ -191,3 +208,23 @@
         (do
           (common/boo! "There was a problem updating your password.")
           (common/layout "Change password" (password-change-form args)))))))
+
+(defpage "/user/:un/about" {:as args}
+  (if (= (:un args) (session/get :username))
+    (common/layout "About you"
+                   (about-form (if (nil? (:about args))
+                                 (user/get-user-from-session)
+                                 args)))
+    (common/borked "You cannot modify that user's account.")))
+
+(defpage [:post "/user/:un/about"] {:as args}
+  (if-not (= (:un args) (session/get :username))
+    (common/borked "You cannot modify that user's account.")
+    (let [user (user/get-user-from-session)]
+      (if (user/update-about! user args)
+        (do
+          (common/yay! "Your information has been updated.")
+          (resp/redirect (profile-link)))
+        (do
+          (common/boo! "There was a problem updating your information.")
+          (common/layout "About you" (about-form args)))))))

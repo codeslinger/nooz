@@ -42,16 +42,17 @@
   (.getHost (URI. url)))
 
 (defpartial post-list-item [{:keys [id title url expiry user_id created_at] :as post} now]
-  [:div.clearfix.post
-   [:div.span12
-    (link-to {:class "title"} url (h title))
-    [:span.dom (str " (" (get-host url) ")")]]
-   [:div.subtext
-    [:span "posted by " (link-to (str "/user/" user_id) (h (user/get-name-for-id user_id)))]
-    [:span " "]
-    [:span (str (common/time-ago-in-words (long-date created_at) now) " ago")]
-    [:span " "]
-    [:span "(" (link-to (str "/post/" id) "0 replies") ")"]]])
+  (let [username (user/get-name-for-id user_id)]
+    [:div.clearfix.post
+     [:div.span12
+      (link-to {:class "title"} url (h title))
+      [:span.dom (str " (" (get-host url) ")")]]
+     [:div.subtext
+      [:span "posted by " (link-to (str "/user/" username) (h username))]
+      [:span " "]
+      [:span (str (common/time-ago-in-words (long-date created_at) now) " ago")]
+      [:span " "]
+      [:span "(" (link-to (str "/post/" id) "0 replies") ")"]]]))
 
 (defpartial post-list [time posts]
   (map #(post-list-item %1 time) posts))

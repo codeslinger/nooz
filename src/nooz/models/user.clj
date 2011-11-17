@@ -59,6 +59,11 @@
              [:email "That email address is already taken."])
   (not (vali/errors? :email)))
 
+(defn valid-about? [about]
+  (vali/rule (vali/max-length? about 256)
+             [:about "Profile information must be 256 characters or less."])
+  (not (vali/errors? :about)))
+
 (defn valid-new-user? [{:keys [username email password password-confirm] :as user}]
   (vali/rule (not (get-user-by-name username))
              [:username "That username is already taken"])
@@ -96,6 +101,13 @@
     (if (valid-email? email)
       (update db/users
         (set-fields {:email email})
+        (where {:id [= (:id user)]})))))
+
+(defn update-about! [user provo]
+  (let [about (:about provo)]
+    (if (valid-about? about)
+      (update db/users
+        (set-fields {:about about})
         (where {:id [= (:id user)]})))))
 
 (defn login! [{:keys [username password] :as user}]
