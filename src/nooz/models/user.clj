@@ -52,15 +52,19 @@
   (valid-password? password password-confirm)
   (not (vali/errors? :cur-password :password)))
 
+(defn valid-email? [email]
+  (vali/rule (vali/is-email? email)
+             [:email "Email address is in an invalid format."])
+  (vali/rule (not (get-user-by-email email))
+             [:email "That email address is already taken."])
+  (not (vali/errors? :email)))
+
 (defn valid-new-user? [{:keys [username email password password-confirm] :as user}]
   (vali/rule (not (get-user-by-name username))
              [:username "That username is already taken"])
   (vali/rule (vali/min-length? username 3)
              [:username "Username must be at least 3 characters."])
-  (vali/rule (vali/is-email? email)
-             [:email "Email address is in an invalid format."])
-  (vali/rule (not (get-user-by-email email))
-             [:email "That email address is already taken."])
+  (valid-email? email)
   (valid-password? password password-confirm)
   (not (vali/errors? :username :email :password)))
 
@@ -81,11 +85,18 @@
     (set-fields {:confirmation_token "*confirmed*"})
     (where {:id [= (:id user)]})))
 
-(defn update-account! [user provo]
+(defn update-password! [user provo]
   (if (valid-new-password? user provo)
     (update db/users
       (set-fields {:password (crypto/gen-hash (:password provo))})
       (where {:id [= (:id user)]}))))
+
+(defn update-email! [user provo]
+  (let [email (:email provo)]
+    (if (valid-email? email)
+      (update db/users
+        (set-fields {:email email})
+        (where {:id [= (:id user)]})))))
 
 (defn login! [{:keys [username password] :as user}]
   (let [user (get-user-by-name username)]
@@ -105,3 +116,7 @@
     (let [username (:username user)]
       (create-user! user)
       (mail/send-registration-message! (get-user-by-name username)))))
+
+(defn gravatar-url [user]
+  (format "http://gravatar.com/avatar/%s?s=48&d=mm"
+          (crypto/md5 (.toLowerCase (.trim (:email user))))))

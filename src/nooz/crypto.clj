@@ -3,7 +3,9 @@
             [clojure.string :as s]
             [clojure.contrib.str-utils :as str])
   (:import org.mindrot.jbcrypt.BCrypt
-           java.security.SecureRandom))
+           java.security.SecureRandom
+           java.security.MessageDigest
+           java.math.BigInteger))
 
 (def ^{:private true
        :doc "Algorithm to seed random numbers."}
@@ -47,3 +49,9 @@
   (let [unwrapped (str/re-gsub #"-" "+" (str/re-gsub #"_" "/" wrapped))
         eqs (seq (repeat (- 4 (rem (.length unwrapped) 4)) "="))]
     (s/join (flatten [unwrapped eqs]))))
+
+(defn md5 [input]
+  (let [alg (doto (MessageDigest/getInstance "MD5")
+              (.reset)
+              (.update (.getBytes input)))]
+    (.toString (new BigInteger 1 (.digest alg)) 16)))

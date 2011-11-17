@@ -9,9 +9,9 @@ body {
     text-align: center; /* center align it with the container */
 }
 .container {
-    width: 820px; /* downsize our container to make the content feel a bit tighter and more cohesive. NOTE: this removes two full columns from the grid, meaning you only go to 14 columns and not 16. */
+    /* downsize our container to make the content feel a bit tighter and more cohesive. NOTE: this removes two full columns from the grid, meaning you only go to 14 columns and not 16. */
+    width: 820px;
 }
-
 /* The white background content wrapper */
 .content {
     background-color: #fff;
@@ -24,60 +24,75 @@ body {
     -moz-box-shadow: 0 1px 2px rgba(0,0,0,.15);
     box-shadow: 0 1px 2px rgba(0,0,0,.15);
 }
-
-/* Page header tweaks */
 .page-header {
     background-color: #f5f5f5;
     padding: 20px 20px 10px;
     margin: -20px -20px 20px;
 }
-
-/* Styles you shouldn't keep as they are for displaying this base example only */
-.content .span10,
-.content .span4 {
-    min-height: 500px;
-}
-
 /* Give a quick and non-cross-browser friendly divider */
 .content .span4 {
     margin-left: 0;
     padding-left: 19px;
     border-left: 1px solid #eee;
 }
-
 .topbar .btn {
     border: 0;
 }
-
 .post {
     padding: 8px 0 8px 10px;
     font-family: Verdana, sans-serif;
 }
-
 .post a.title,
 .post a.title:visited {
     font-size: 18px;
     text-decoration: none;
     color: #404040;
 }
-
 .post .dom,
 .post .subtext {
     color: #BFBFBF;
 }
-
 .post .dom {
     font-size: 14px;
 }
-
 .post .subtext {
     font-size: 12px;
     padding-left: 5px;
 }
-
 .post .subtext a,
 .post .subtext a:visited {
     text-decoration: none;
     font-weight: bold;
     color: #BFBFBF;
+}
+.profile .profile-head {
+    margin-bottom: 10px;
+}
+.profile h2 {
+    position: relative;
+    display: inline;
+    left: 15px;
+    top: -15px;
+    font-size: 28px;
+}
+.profile pre {
+    color: #808080;
+    font-style: italic;
+    margin: 20px 10px;
+    border: solid 1px #ddd
+    background: inherit;
+}
+.profile ul {
+    margin: 0;
+}
+.profile ul li {
+    list-style-type: none;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+.profile .email-button {
+    display: inline;
+    position: relative;
+    left: 7px;
+    top: 5px;
 }

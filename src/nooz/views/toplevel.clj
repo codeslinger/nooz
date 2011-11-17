@@ -4,7 +4,6 @@
             [noir.session :as session]
             [noir.validation :as vali]
             [clojure.string :as string]
-            [clojure.contrib.math :as math]
             [clj-time.core :as time]
             [clj-time.format :as tf]
             [clj-time.coerce :as tc]
@@ -22,18 +21,7 @@
         [nooz.models.user :as user])
   (:import java.net.URI))
 
-(defn time-ago-in-words [from to]
-  (let [diff (/ (- to from) 1000 60)]
-    (cond
-      (< diff 1) "less than a minute"
-      (< diff 44) (str (math/round diff) " minutes")
-      (< diff 89) "about an hour"
-      (< diff 1439) (str "about " (math/round (/ diff 60.0)) " hours")
-      (< diff 2519) "about a day"
-      (< diff 43199) (str "about " (math/round (/ diff 1440.0)) " days")
-      (< diff 86399) "about a month"
-      (< diff 525599) (str "about " (math/round (/ diff 43200.0)) " months")
-      :else "many months")))
+
 
 (defpartial new-post-form [{:keys [title url expiry] :as post}]
   (form-to [:post "/submit"]
@@ -61,7 +49,7 @@
    [:div.subtext
     [:span "posted by " (link-to (str "/user/" user_id) (h (user/get-name-for-id user_id)))]
     [:span " "]
-    [:span (str (time-ago-in-words (long-date created_at) now) " ago")]
+    [:span (str (common/time-ago-in-words (long-date created_at) now) " ago")]
     [:span " "]
     [:span "(" (link-to (str "/post/" id) "0 replies") ")"]]])
 
