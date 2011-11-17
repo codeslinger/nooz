@@ -135,16 +135,20 @@
     (render "/login")))
 
 (defpage "/register" {:as user}
-  (common/layout "Sign Up" (registration-form user)))
+  (if-not (session/get :username)
+    (common/layout "Sign Up" (registration-form user))
+    (common/borked "You can't register while you're signed in. Logout first.")))
 
 (defpage [:post "/register"] {:as user}
-  (if (user/register! user)
-    (do
-      (common/yay! "We've emailed you a confirmation link. Click the link in the email to continue sign up.")
-      (resp/redirect "/login"))
-    (do
-      (common/boo! "There was a problem with your sign up information.")
-      (render "/register" user))))
+  (if (session/get :username)
+    (common/borked "You can't register while you're signed in. Logout first.")
+    (if (user/register! user)
+      (do
+        (common/yay! "We've emailed you a confirmation link. Click the link in the email to continue sign up.")
+        (resp/redirect "/login"))
+      (do
+        (common/boo! "There was a problem with your sign up information.")
+        (render "/register" user)))))
 
 (defpage "/logout" {}
   (user/logout!)
