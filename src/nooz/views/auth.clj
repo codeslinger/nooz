@@ -62,7 +62,7 @@
 (defpartial profile-edit-form-parts [{:as user}]
   [:hr]
   [:div.row
-   [:div.span5
+   [:div.span6
     [:table.bordered-table
      [:tr
       [:td [:strong "Email"]]
@@ -72,6 +72,9 @@
              (str (profile-link user) "/email")
              [:button.btn.small "Update"])]]
   [:ul
+   [:li
+    (link-to (str (profile-link user) "/about")
+             [:button.btn "Update Info"])]
    [:li
     (link-to (str (profile-link user) "/password")
              [:button.btn "Change password"])]])
@@ -87,12 +90,8 @@
      (if (:about user)
        [:div.row
         [:div.span10
-         [:pre (:about user)]]
-       (if my-user
-         [:div (link-to {:class "side-button"}
-                        (str (profile-link user) "/about")
-                        [:button.btn.small "Update"])])])
-     [:div.span5
+         [:pre (:about user)]]])
+     [:div.span6
       [:table.bordered-table
        [:tr
         [:td [:strong "Member for"]]

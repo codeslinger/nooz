@@ -49,7 +49,7 @@
       (insert-post! post user now))))
 
 (defn get-post-by-id [id]
-  (select db/posts (where {:id id}) (limit 1)))
+  (first (select db/posts (where {:id id}) (limit 1))))
 
 (defn get-latest-posts []
   (select db/posts (order :created_at :DESC) (limit 30)))

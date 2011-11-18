@@ -37,7 +37,7 @@
 (defn get-host [url]
   (.getHost (URI. url)))
 
-(defpartial post-list-item [{:keys [id title url expiry user_id created_at] :as post} now]
+(defpartial post-list-item [{:keys [id title url user_id created_at] :as post} now]
   (let [username (user/get-name-for-id user_id)]
     [:div.clearfix.post
      [:div.span12
@@ -46,14 +46,19 @@
      [:div.subtext
       [:span "posted by " (link-to (str "/user/" username) (h username))]
       [:span " "]
-      [:span (str (common/time-ago-in-words (long-date created_at) now) " ago")]
+      [:span (str (common/time-ago-in-words
+                   (long-date created_at)
+                   now) " ago")]
       [:span " "]
       (let [comments (comment/get-comment-count-for-post post)
             label (if (= 1 comments) "comment" "comments")]
-        [:span "(" (link-to (str "/post/" id) (str comments " " label)) ")"])]]))
+        [:span "(" (link-to (str "/item/" id) (str comments " " label)) ")"])]]))
 
 (defpartial post-list [time posts]
   (map #(post-list-item %1 time) posts))
+
+(defpartial post-details [time post]
+  (post-list-item post time))
 
 (pre-route "/submit" {}
            (when-not (user/get-user-from-session)
@@ -70,7 +75,8 @@
 (defpage "/item/:id" {:keys [id]}
   (let [post (post/get-post-by-id (Integer. id))]
     (if post
-      (common/layout "Submission Details" "")
+      (let [now (tc/to-long (time/now))]
+        (common/layout "Submission Details" (post-details now post)))
       (common/borked "Sorry, we could not find the requested item."))))
 
 (defpage [:get "/submit"] {:as post}

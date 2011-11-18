@@ -40,11 +40,10 @@ body {
 }
 .post {
     padding: 8px 0 8px 10px;
-    font-family: Verdana, sans-serif;
 }
 .post a.title,
 .post a.title:visited {
-    font-size: 18px;
+    font-size: 20px;
     text-decoration: none;
     color: #404040;
 }
@@ -56,17 +55,17 @@ body {
     font-size: 14px;
 }
 .post .subtext {
-    font-size: 12px;
+    font-size: 15px;
     padding-left: 5px;
 }
 .post .subtext a,
 .post .subtext a:visited {
     text-decoration: none;
     font-weight: bold;
-    color: #BFBFBF;
+    color: #B0B0B0;
 }
 .profile .profile-head {
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 .profile h2 {
     position: relative;
