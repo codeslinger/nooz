@@ -29,8 +29,7 @@
           [:li (link-to "/" "Top")]
           [:li (link-to "/latest" "Latest")]
           (if (not (nil? username))
-            [:li (link-to "/submit" "Submit")])
-          [:li (link-to "/about" "About")]]
+            [:li (link-to "/submit" "Submit")])]
          [:span.pull-right
           (if (nil? username)
             [:ul.nav
@@ -42,8 +41,10 @@
       [:div.container
        [:div.content body]
        [:footer
-        [:p "&copy; 2011 "
-         (link-to "http://cbcg.net/" "Cipher Block Chain Gang")]]]])))
+        [:p
+         [:span "&copy; 2011 " (link-to "http://cbcg.net/" "cipher block chain gang")]
+         [:span " | "]
+         [:span (link-to "http://github.com/codeslinger/nooz" "source")]]]]])))
 
 (defpartial layout [page-name & content]
   (page-wrapper

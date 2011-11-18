@@ -8,7 +8,8 @@
             [clj-time.format :as tf]
             [clj-time.coerce :as tc]
             [nooz.models.user :as user]
-            [nooz.models.post :as post])
+            [nooz.models.post :as post]
+            [nooz.models.comment :as comment])
   (:use [noir.core :only [defpage pre-route defpartial render]]
         [hiccup.core :only [html
                             h]]
@@ -28,11 +29,6 @@
     [:fieldset
      (common/form-item :title "Title" (text-field {:class "span6"} "title" title))
      (common/form-item :url "URL" (text-field {:class "span6"} "url" url))
-     (common/form-item :expiry "Comments close in"
-                       (drop-down {:class "small"}
-                                  "expiry"
-                                  post/*valid-expiry-times*
-                                  (Integer. (or expiry 0))))
      [:div.actions [:button.primary.btn "Submit"]]]))
 
 (defn long-date [t]
@@ -52,31 +48,33 @@
       [:span " "]
       [:span (str (common/time-ago-in-words (long-date created_at) now) " ago")]
       [:span " "]
-      [:span "(" (link-to (str "/post/" id) "0 replies") ")"]]]))
+      (let [comments (comment/get-comment-count-for-post post)
+            label (if (= 1 comments) "comment" "comments")]
+        [:span "(" (link-to (str "/post/" id) (str comments " " label)) ")"])]]))
 
 (defpartial post-list [time posts]
   (map #(post-list-item %1 time) posts))
 
 (pre-route "/submit" {}
            (when-not (user/get-user-from-session)
-             (common/borked "You must be logged in to submit a headline.")))
+             (common/borked "You must be logged in to make a submission.")))
 
 (defpage "/" {}
-  (common/layout "Top Headlines" ""))
+  (common/layout "Top Submissions" ""))
 
 (defpage "/latest" {}
   (common/layout
-   "Latest Headlines"
+   "Latest Submissions"
    (post-list (tc/to-long (time/now)) (post/get-latest-posts))))
 
 (defpage "/item/:id" {:keys [id]}
   (let [post (post/get-post-by-id (Integer. id))]
     (if post
-      (common/layout "Headline Details" "")
+      (common/layout "Submission Details" "")
       (common/borked "Sorry, we could not find the requested item."))))
 
 (defpage [:get "/submit"] {:as post}
-  (common/layout "Submit a headline" (new-post-form post)))
+  (common/layout "New submission" (new-post-form post)))
 
 (defpage [:post "/submit"] {:as post}
   (let [post (post/create-post! post (user/get-user-from-session))]
@@ -86,20 +84,3 @@
         (common/boo! "There were some problems with your submission.")
         (render "/submit" post)))))
 
-(defpage "/about" []
-  (common/layout
-   "What is Nooz?"
-   [:p "Nooz is a collaborative news site, a la Hacker News, but with a
-twist. You can reply to a post either by commenting or submitting your
-reply via URL, e.g. from your own blog post. If you choose to reply via
-URL, the reply will show up immediately. If you choose to comment on this
-site, the comment will not be shown for a period of time set by the
-poster after the original post was submitted. Once a post has existed
-for its configured period of time, all the comments on that post are
-shown and commenting is then closed. Comments are limited to 1000
-characters and you can only comment once on any given post. You can
-however, edit your comment up until the time commenting closes."]
-   [:p "The source code for this application is available "
-    (link-to "http://github.com/codeslinger/nooz" "on Github")
-    ". Feel free to peruse, fork, issue pull requests, etc. Bug
-reports and pull requests are welcome!"]))

@@ -8,7 +8,9 @@
             [clj-time.coerce :as tcoerce]
             [nooz.views.common :as common]
             [nooz.crypto :as crypto]
-            [nooz.models.user :as user])
+            [nooz.models.user :as user]
+            [nooz.models.post :as post]
+            [nooz.models.comment :as comment])
   (:use [noir.core :only [defpage
                           defpartial
                           render]]
@@ -39,7 +41,8 @@
 (defpartial registration-form [{:keys [username
                                        email
                                        password
-                                       password-confirm] :as user}]
+                                       password-confirm]
+                                :as user}]
   (form-to [:post "/register"]
     [:fieldset
      (common/form-item :username "Username"
@@ -96,10 +99,18 @@
         [:td (common/human-time (:created_at user))]]
        [:tr
         [:td [:strong "Submissions"]]
-        [:td (link-to (str (profile-link user) "/submissions") "0")]]
+        (let [submissions (post/get-post-count-for-user user)]
+          (if (= 0 submissions)
+            [:td "0"]
+            [:td (link-to (str (profile-link user) "/submissions")
+                          (str submissions))]))]
        [:tr
         [:td [:strong "Comments"]]
-        [:td (link-to (str (profile-link user) "/comments") "0")]]]]
+        (let [comments (comment/get-comment-count-for-user user)]
+          (if (= 0 comments)
+            [:td "0"]
+            [:td (link-to (str (profile-link user) "/comments")
+                          (str comments))]))]]]
      (if my-user
        (profile-edit-form-parts user))]))
 
@@ -128,8 +139,12 @@
 (defpartial about-form [{:keys [about] :as provo}]
   (form-to [:post (str (profile-link) "/about")]
     [:fieldset
-     (common/form-item :about "About"
-                       (text-area {:class "span8"} "about" about))
+     [(if (vali/errors? :about) :div.clearfix.error :div.clearfix)
+      (label "about" "About")
+      [:div.input
+       (text-area {:class "span8"} "about" about)
+       (vali/on-error :about common/error-inline)
+       [:span.help-block "256 character maximum."]]]
      [:div.actions [:button.primary.btn "Update"]]]))
 
 (defpage "/login" {:as user}

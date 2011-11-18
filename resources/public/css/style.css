@@ -78,7 +78,7 @@ body {
 .profile pre {
     color: #808080;
     font-style: italic;
-    border: solid 1px #ddd
+    border: solid 1px #ddd;
     background: inherit;
 }
 .profile ul {

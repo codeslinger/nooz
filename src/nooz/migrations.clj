@@ -11,6 +11,7 @@
                                          [:username "VARCHAR(64) NOT NULL"]
                                          [:password "VARCHAR(64) NOT NULL"]
                                          [:email "VARCHAR(256) NOT NULL"]
+                                         [:about "VARCHAR(256)"]
                                          [:created_at "TIMESTAMP NOT NULL"]
                                          [:confirmation_token "VARCHAR(64)"])
                       :down #(drop-table :users)
@@ -21,8 +22,7 @@
                                          [:title "VARCHAR(256) NOT NULL"]
                                          [:url "VARCHAR(1024) NOT NULL"]
                                          [:user_id "BIGINT NOT NULL"]
-                                         [:created_at "TIMESTAMP NOT NULL"]
-                                         [:expires_at "TIMESTAMP NOT NULL"])
+                                         [:created_at "TIMESTAMP NOT NULL"])
                       :down #(drop-table :posts)
                       }
       20111109095705 {:doc "create replies table"
@@ -42,11 +42,5 @@
                                          [:user_id "BIGINT NOT NULL"]
                                          [:created_at "TIMESTAMP NOT NULL"])
                       :down #(drop-table :comments)
-                      }
-      20111115141358 {:doc "add Gravatar hash and about fields to users table"
-                      :up #(do-commands "ALTER TABLE users ADD COLUMN gravatar_hash CHAR(32)"
-                                        "ALTER TABLE users ADD COLUMN about VARCHAR(256)")
-                      :down #(do-commands "ALTER TABLE users DROP COLUMN about"
-                                          "ALTER TABLE users DROP COLUMN gravatar_hash")
                       }
       ))
