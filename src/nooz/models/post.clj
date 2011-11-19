@@ -24,11 +24,6 @@
    (catch URISyntaxException e
      false)))
 
-(defn in?
-  "true if coll contains elem"
-  [coll elem]
-  (some #{elem} coll))
-
 (defn- valid-new-post? [{:keys [title url] :as post}]
   (vali/rule (and (vali/has-value? title)
                   (vali/min-length? title *min-title-length*))
