@@ -9,6 +9,11 @@
   (:use korma.core)
   (:import java.sql.Timestamp))
 
+(def *min-username-length* 3)
+(def *max-username-length* 64)
+(def *max-about-length* 256)
+(def *max-email-length* 256)
+
 (defn get-user-by-name [username]
   (first
    (select db/users
@@ -53,22 +58,28 @@
   (not (vali/errors? :cur-password :password)))
 
 (defn valid-email? [email]
-  (vali/rule (vali/is-email? email)
+  (vali/rule (vali/max-length? email *max-email-length*)
+             [:email (str "Too long. " *max-email-length* " characters or less, please.")])
+  (vali/rule (or (vali/errors? :email)
+                 (vali/is-email? email))
              [:email "Email address is in an invalid format."])
-  (vali/rule (not (get-user-by-email email))
+  (vali/rule (or (vali/errors? :email)
+                 (not (get-user-by-email email)))
              [:email "That email address is already taken."])
   (not (vali/errors? :email)))
 
 (defn valid-about? [about]
-  (vali/rule (vali/max-length? about 256)
-             [:about "Profile information must be 256 characters or less."])
+  (vali/rule (vali/max-length? about *max-about-length*)
+             [:about (str "Too long. " *max-about-length* " characters or less.")])
   (not (vali/errors? :about)))
 
 (defn valid-new-user? [{:keys [username email password password-confirm] :as user}]
   (vali/rule (not (get-user-by-name username))
              [:username "That username is already taken"])
-  (vali/rule (vali/min-length? username 3)
-             [:username "Username must be at least 3 characters."])
+  (vali/rule (vali/min-length? username *min-username-length*)
+             [:username (str "Username must be at least " *min-username-length* " characters.")])
+  (vali/rule (vali/max-length? username *max-about-length*)
+             [:username (str "Username cannot be more than " *max-username-length* " characters.")])
   (valid-email? email)
   (valid-password? password password-confirm)
   (not (vali/errors? :username :email :password)))

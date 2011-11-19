@@ -12,7 +12,7 @@
            java.net.URISyntaxException))
 
 (def *min-title-length* 3)
-(def *max-title-length* 256)
+(def *max-title-length* 80)
 (def *max-url-length* 1024)
 
 (defn- valid-url? [url]
@@ -31,15 +31,15 @@
 
 (defn- valid-new-post? [{:keys [title url] :as post}]
   (vali/rule (and (vali/has-value? title)
-                  (vali/min-length? title 3))
+                  (vali/min-length? title *min-title-length*))
              [:title (str "Title must be at least " *min-title-length* " characters.")])
   (vali/rule (or (vali/errors? :title)
-                 (vali/max-length? title 256))
+                 (vali/max-length? title *max-title-length*))
              [:title (str "Too long. " *max-title-length* " characters or less, please.")])
   (vali/rule (vali/has-value? url)
              [:url "URL cannot be blank."])
   (vali/rule (or (vali/errors? :url)
-                 (vali/max-length? url 1024))
+                 (vali/max-length? url *max-url-length*))
              [:url (str "Too long. " *max-url-length* " characters or less, please.")])
   (vali/rule (or (vali/errors? :url)
                  (valid-url? url))

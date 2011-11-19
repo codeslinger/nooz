@@ -39,11 +39,11 @@ body {
     border: 0;
 }
 .post {
-    padding: 8px 0 8px 10px;
+    padding: 5px 0 5px 10px;
 }
 .post a.title,
 .post a.title:visited {
-    font-size: 20px;
+    font-size: 16px;
     text-decoration: none;
     color: #404040;
 }
@@ -52,10 +52,10 @@ body {
     color: #BFBFBF;
 }
 .post .dom {
-    font-size: 14px;
+    font-size: 12px;
 }
 .post .subtext {
-    font-size: 15px;
+    font-size: 12px;
     padding-left: 5px;
 }
 .post .subtext a,
