@@ -22,8 +22,6 @@
         [nooz.models.user :as user])
   (:import java.net.URI))
 
-
-
 (defpartial new-post-form [{:keys [title url expiry] :as post}]
   (form-to [:post "/submit"]
     [:fieldset
@@ -37,14 +35,21 @@
 (defn get-host [url]
   (.getHost (URI. url)))
 
-(defpartial post-list-item [{:keys [id title url user_id created_at] :as post} now]
+(defpartial post-list-item [{:keys [id
+                                    title
+                                    url
+                                    user_id
+                                    created_at] :as post}
+                            now]
   (let [username (user/get-name-for-id user_id)]
     [:div.clearfix.post
      [:div.span12
       (link-to {:class "title"} url (h title))
       [:span.dom (str " (" (get-host url) ")")]]
      [:div.subtext
-      [:span "posted by " (link-to (str "/user/" username) (h username))]
+      [:span "posted by"]
+      [:span " "]
+      [:span (link-to (str "/user/" username) (h username))]
       [:span " "]
       [:span (str (common/time-ago-in-words
                    (long-date created_at)
@@ -70,7 +75,8 @@
 (defpage "/latest" {}
   (common/layout
    "Latest Submissions"
-   (post-list (tc/to-long (time/now)) (post/get-latest-posts))))
+   (post-list (tc/to-long (time/now))
+              (post/get-latest-posts))))
 
 (defpage "/item/:id" {:keys [id]}
   (let [post (post/get-post-by-id (Integer. id))]
@@ -79,7 +85,7 @@
         (common/layout "Submission Details" (post-details now post)))
       (common/borked "Sorry, we could not find the requested item."))))
 
-(defpage [:get "/submit"] {:as post}
+(defpage "/submit" {:as post}
   (common/layout "New submission" (new-post-form post)))
 
 (defpage [:post "/submit"] {:as post}
