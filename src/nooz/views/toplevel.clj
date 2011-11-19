@@ -86,7 +86,7 @@
       (common/borked "Sorry, we could not find the requested item."))))
 
 (defpage "/submit" {:as post}
-  (common/layout "New submission" (new-post-form post)))
+  (common/layout "New Submission" (new-post-form post)))
 
 (defpage [:post "/submit"] {:as post}
   (let [post (post/create-post! post (user/get-user-from-session))]

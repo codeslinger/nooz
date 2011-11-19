@@ -11,6 +11,10 @@
            java.net.URI
            java.net.URISyntaxException))
 
+(def *min-title-length* 3)
+(def *max-title-length* 256)
+(def *max-url-length* 1024)
+
 (defn- valid-url? [url]
   (try
    (let [u (URI. url)]
@@ -28,12 +32,18 @@
 (defn- valid-new-post? [{:keys [title url] :as post}]
   (vali/rule (and (vali/has-value? title)
                   (vali/min-length? title 3))
-             [:title "Title must be at least 3 characters."])
+             [:title (str "Title must be at least " *min-title-length* " characters.")])
+  (vali/rule (or (vali/errors? :title)
+                 (vali/max-length? title 256))
+             [:title (str "Too long. " *max-title-length* " characters or less, please.")])
   (vali/rule (vali/has-value? url)
              [:url "URL cannot be blank."])
   (vali/rule (or (vali/errors? :url)
+                 (vali/max-length? url 1024))
+             [:url (str "Too long. " *max-url-length* " characters or less, please.")])
+  (vali/rule (or (vali/errors? :url)
                  (valid-url? url))
-             [:url "Malformed URL."])
+             [:url "We only accept HTTP, HTTPS or FTP URLs."])
   (not (vali/errors? :title :url)))
 
 (defn- insert-post! [post user time]
