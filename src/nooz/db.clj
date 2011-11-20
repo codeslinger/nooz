@@ -21,10 +21,17 @@
              :password "nooz"}))
 
 (defentity schema_versions)
-(defentity users)
-(defentity posts)
-(defentity comments)
-(defentity replies)
+(defentity replies
+  (belongs-to users {:fk :user_id})
+  (belongs-to posts {:fk :post_id}))
+(defentity comments
+  (belongs-to users {:fk :user_id})
+  (belongs-to posts {:fk :post_id}))
+(defentity posts
+  (belongs-to users {:fk :user_id}))
+(defentity users
+  (has-many posts)
+  (has-many comments))
 
 (defn schema-table-exists? []
   (not (nil?

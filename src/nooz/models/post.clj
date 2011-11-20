@@ -65,4 +65,9 @@
                    (aggregate (count :*) :cnt)
                    (where (= :user_id user-id)))))))
 
+(defn get-posts-for-name [username]
+  (select db/posts
+    (with db/users)
+    (where (= :users.username username))))
+
 

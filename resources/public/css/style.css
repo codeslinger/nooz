@@ -93,3 +93,10 @@ body {
     top: 3px;
     left: 7px;
 }
+div.comment-box {
+    margin: 10px;
+}
+div.comment-box textarea {
+    height: 90px;
+    width: 490px;
+}

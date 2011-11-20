@@ -17,6 +17,7 @@
         [hiccup.form-helpers :only [form-to
                                     label
                                     text-field
+                                    text-area
                                     password-field
                                     drop-down]]
         [nooz.models.user :as user])
@@ -62,27 +63,38 @@
 (defpartial post-list [time posts]
   (map #(post-list-item %1 time) posts))
 
+(defpartial comment-form [post_id]
+  (form-to [:post (str "/item/" post_id "/comments")]
+    [:div.comment-box
+     (text-area "comment")
+     (vali/on-error :comment common/error-inline)
+     [:span.help-block "1000 character maximum."]
+     [:button.btn.small "submit comment"]]))
+
 (defpartial post-details [time post]
-  (post-list-item post time))
+  (post-list-item post time)
+  (comment-form (:id post)))
 
 (pre-route "/submit" {}
            (when-not (user/get-user-from-session)
              (common/borked "You must be logged in to make a submission.")))
 
 (defpage "/" {}
-  (common/layout "Top Submissions" ""))
+  (common/layout "Top Submissions"
+                 (post-list (tc/to-long (time/now))
+                            (post/get-latest-posts))))
 
 (defpage "/latest" {}
-  (common/layout
-   "Latest Submissions"
-   (post-list (tc/to-long (time/now))
-              (post/get-latest-posts))))
+  (common/layout "Latest Submissions"
+                 (post-list (tc/to-long (time/now))
+                            (post/get-latest-posts))))
 
 (defpage "/item/:id" {:keys [id]}
   (let [post (post/get-post-by-id (Integer. id))]
     (if post
       (let [now (tc/to-long (time/now))]
-        (common/layout "Submission Details" (post-details now post)))
+        (common/layout "Submission Details"
+                       (post-details now post)))
       (common/borked "Sorry, we could not find the requested item."))))
 
 (defpage "/submit" {:as post}
@@ -95,4 +107,10 @@
       (do
         (common/boo! "There were some problems with your submission.")
         (render "/submit" post)))))
+
+(defpage "/user/:un/submissions" {:as args}
+  (let [username (:un args)]
+    (common/layout (str "Submissions for " username)
+                   (post-list (tc/to-long (time/now))
+                              (post/get-posts-for-name username)))))
 
