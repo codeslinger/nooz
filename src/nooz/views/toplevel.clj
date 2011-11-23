@@ -80,25 +80,22 @@
              (common/borked "You must be logged in to make a submission.")))
 
 (defpage "/" {}
-  (common/layout "Top Submissions"
-                 (post-list (tc/to-long (time/now))
+  (common/layout (post-list (tc/to-long (time/now))
                             (post/get-latest-posts))))
 
 (defpage "/latest" {}
-  (common/layout "Latest Submissions"
-                 (post-list (tc/to-long (time/now))
+  (common/layout (post-list (tc/to-long (time/now))
                             (post/get-latest-posts))))
 
 (defpage "/item/:id" {:keys [id]}
   (let [post (post/get-post-by-id (Integer. id))]
     (if post
       (let [now (tc/to-long (time/now))]
-        (common/layout "Submission Details"
-                       (post-details now post)))
+        (common/layout (post-details now post)))
       (common/borked "Sorry, we could not find the requested item."))))
 
 (defpage "/submit" {:as post}
-  (common/layout "New Submission" (new-post-form post)))
+  (common/titled-layout "New submission" (new-post-form post)))
 
 (defpage [:post "/submit"] {:as post}
   (let [post (post/create-post! post (user/get-user-from-session))]
@@ -110,7 +107,8 @@
 
 (defpage "/user/:un/submissions" {:as args}
   (let [username (:un args)]
-    (common/layout (str "Submissions for " username)
-                   (post-list (tc/to-long (time/now))
-                              (post/get-posts-for-name username)))))
+    (common/titled-layout
+     (str username "'s submissions")
+     (post-list (tc/to-long (time/now))
+                (post/get-posts-for-name username)))))
 

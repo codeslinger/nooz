@@ -1,20 +1,32 @@
 (ns nooz.views.common
   (:require [noir.session :as session]
             [noir.validation :as vali]
+            [noir.request :as req]
+            [noir.response :as resp]
             [clojure.string :as string]
             [clojure.contrib.math :as math]
             [clj-time.core :as time]
-            [clj-time.coerce :as tc]
-            [noir.response :as resp])
+            [clj-time.coerce :as tc])
   (:use [noir.core :only [defpartial]]
         [hiccup.core :only [h]]
-        [hiccup.page-helpers :only [include-css html5 link-to]]
-        [hiccup.form-helpers :only [form-to text-field password-field label]]
+        [hiccup.page-helpers :only [include-css
+                                    html5
+                                    link-to]]
+        [hiccup.form-helpers :only [form-to
+                                    text-field
+                                    password-field
+                                    label]]
         [nooz.models.user :as user]
         [nooz.server :only [*app-name*]]))
 
+(defn nav-link [uri target label]
+  (if (= uri target)
+    [:li.active (link-to target label)]
+    [:li (link-to target label)]))
+
 (defpartial page-wrapper [& body]
-  (let [username (session/get :username)]
+  (let [username (session/get :username)
+        uri (:uri (req/ring-request))]
     (html5
      [:head
       [:title *app-name*]
@@ -26,17 +38,17 @@
         [:div.container
          (link-to {:class "brand"} "/" *app-name*)
          [:ul.nav
-          [:li (link-to "/" "Top")]
-          [:li (link-to "/latest" "Latest")]
+          (nav-link uri "/" "Top")
+          (nav-link uri "/latest" "Latest")
           (if (not (nil? username))
-            [:li (link-to "/submit" "Submit")])]
+            (nav-link uri "/submit" "Submit"))]
          [:span.pull-right
           (if (nil? username)
             [:ul.nav
-             [:li (link-to "/register" "Sign Up")]
-             [:li (link-to "/login" "Login")]]
+             (nav-link uri "/register" "Sign Up")
+             (nav-link uri "/login" "Login")]
             [:ul.nav
-             [:li (link-to (str "/user/" username) (h username))]
+             (nav-link uri (str "/user/" username) (h username))
              [:li (link-to "/logout" "logout")]])]]]]
       [:div.container
        [:div.content body]
@@ -46,14 +58,18 @@
          [:span " | "]
          [:span (link-to "http://github.com/codeslinger/nooz" "source")]]]]])))
 
-(defpartial layout [page-name & content]
+(defpartial layout [& content]
   (page-wrapper
-   [:div.page-header [:h1 page-name]]
-   [:div.row
-    [:div.span14
-     (session/flash-get)
-     content]]))
+   [:div.row [:div.span14
+              (session/flash-get)
+              content]]))
 
+(defpartial titled-layout [title & content]
+  (page-wrapper
+    [:div.page-header [:h1 title]]
+    [:div.row [:div.span14
+               (session/flash-get)
+               content]]))
 (defpartial error-text [errors]
   [:p.alert-message.error (string/join "<br/>" errors)])
 

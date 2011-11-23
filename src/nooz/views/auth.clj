@@ -147,7 +147,7 @@
      [:div.actions [:button.primary.btn "Update"]]]))
 
 (defpage "/login" {:as user}
-  (common/layout "Login" (login-form user)))
+  (common/layout (login-form user)))
 
 (defpage [:post "/login"] {:as user}
   (if (user/login! user)
@@ -167,7 +167,7 @@
 
 (defpage "/register" {:as user}
   (if-not (session/get :username)
-    (common/layout "Sign Up" (registration-form user))
+    (common/layout (registration-form user))
     (common/borked "You can't register while you're signed in. Logout first.")))
 
 (defpage [:post "/register"] {:as user}
@@ -187,11 +187,11 @@
 
 (defpage "/user/:username" {:keys [username]}
   (let [user (user/get-user-by-name username)]
-    (common/layout "Profile" (profile-view user))))
+    (common/layout (profile-view user))))
 
 (defpage "/user/:un/email" {:as args}
   (if (= (:un args) (session/get :username))
-    (common/layout "Change email address" (email-change-form args))
+    (common/layout (email-change-form args))
     (common/borked "You cannot modify that user's account.")))
 
 (defpage [:post "/user/:un/email"] {:as args}
@@ -208,7 +208,7 @@
 
 (defpage "/user/:un/password" {:as args}
   (if (= (:un args) (session/get :username))
-    (common/layout "Change password" (password-change-form args))
+    (common/layout (password-change-form args))
     (common/borked "You cannot modify that user's account.")))
 
 (defpage [:post "/user/:un/password"] {:as args}
@@ -221,12 +221,11 @@
           (resp/redirect (profile-link)))
         (do
           (common/boo! "There was a problem updating your password.")
-          (common/layout "Change password" (password-change-form args)))))))
+          (common/layout (password-change-form args)))))))
 
 (defpage "/user/:un/about" {:as args}
   (if (= (:un args) (session/get :username))
-    (common/layout "About you"
-                   (about-form (if (nil? (:about args))
+    (common/layout (about-form (if (nil? (:about args))
                                  (user/get-user-from-session)
                                  args)))
     (common/borked "You cannot modify that user's account.")))
@@ -241,4 +240,4 @@
           (resp/redirect (profile-link)))
         (do
           (common/boo! "There was a problem updating your information.")
-          (common/layout "About you" (about-form args)))))))
+          (common/layout (about-form args)))))))
