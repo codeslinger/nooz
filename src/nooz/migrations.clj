@@ -25,21 +25,13 @@
                                          [:created_at "TIMESTAMP NOT NULL"])
                       :down #(drop-table :posts)
                       }
-      20111109095705 {:doc "create replies table"
-                      :up #(create-table :replies
-                                         [:id "BIGSERIAL"]
-                                         [:url "VARCHAR(1024) NOT NULL"]
-                                         [:post_id "BIGINT NOT NULL"]
-                                         [:user_id "BIGINT NOT NULL"]
-                                         [:created_at "TIMESTAMP NOT NULL"])
-                      :down #(drop-table :replies)
-                      }
       20111109100323 {:doc "create comments table"
                       :up #(create-table :comments
                                          [:id "BIGSERIAL"]
                                          [:comment "VARCHAR(1000) NOT NULL"]
                                          [:post_id "BIGINT NOT NULL"]
                                          [:user_id "BIGINT NOT NULL"]
+                                         [:reply_to_id "BIGINT"]
                                          [:created_at "TIMESTAMP NOT NULL"])
                       :down #(drop-table :comments)
                       }

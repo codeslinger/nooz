@@ -24,7 +24,6 @@
 (defentity users)
 (defentity posts)
 (defentity comments)
-(defentity replies)
 
 (defentity users
   (has-many posts)
@@ -32,9 +31,6 @@
 (defentity posts
   (belongs-to users {:fk :user_id}))
 (defentity comments
-  (belongs-to users {:fk :user_id})
-  (belongs-to posts {:fk :post_id}))
-(defentity replies
   (belongs-to users {:fk :user_id})
   (belongs-to posts {:fk :post_id}))
 

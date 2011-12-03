@@ -4,9 +4,7 @@
             [noir.request :as req]
             [noir.response :as resp]
             [clojure.string :as string]
-            [clojure.contrib.math :as math]
-            [clj-time.core :as time]
-            [clj-time.coerce :as tc])
+            [nooz.time :as nt])
   (:use [noir.core :only [defpartial]]
         [hiccup.core :only [h]]
         [hiccup.page-helpers :only [include-css
@@ -16,13 +14,14 @@
                                     text-field
                                     password-field
                                     label]]
-        [nooz.models.user :as user]
         [nooz.server :only [*app-name*]]))
 
 (defn nav-link [uri target label]
   (if (= uri target)
     [:li.active (link-to target label)]
     [:li (link-to target label)]))
+
+;; ----- PARTIALS ------------------------------------------------------------
 
 (defpartial page-wrapper [& body]
   (let [username (session/get :username)
@@ -58,18 +57,6 @@
          [:span " | "]
          [:span (link-to "http://github.com/codeslinger/nooz" "source")]]]]])))
 
-(defpartial layout [& content]
-  (page-wrapper
-   [:div.row [:div.span14
-              (session/flash-get)
-              content]]))
-
-(defpartial titled-layout [title & content]
-  (page-wrapper
-    [:div.page-header [:h1 title]]
-    [:div.row [:div.span14
-               (session/flash-get)
-               content]]))
 (defpartial error-text [errors]
   [:p.alert-message.error (string/join "<br/>" errors)])
 
@@ -85,6 +72,8 @@
    (label (name key) title)
    [:div.input value (vali/on-error key error-inline)]])
 
+;; ----- HELPER FUNCTIONS ----------------------------------------------------
+
 (defn boo! [msg]
   (session/flash-put! (error-text [msg])))
 
@@ -95,19 +84,17 @@
   (boo! msg)
   (resp/redirect "/"))
 
-(defn time-ago-in-words [from to]
-  (let [diff (/ (- to from) 1000 60)]
-    (cond
-      (< diff 1) "less than a minute"
-      (< diff 44) (str (math/round diff) " minutes")
-      (< diff 89) "one hour"
-      (< diff 1439) (str (math/round (/ diff 60.0)) " hours")
-      (< diff 2519) "one day"
-      (< diff 43199) (str (math/round (/ diff 1440.0)) " days")
-      (< diff 86399) "one month"
-      (< diff 525599) (str (math/round (/ diff 43200.0)) " months")
-      :else "many months")))
+;; ----- LAYOUTS -------------------------------------------------------------
 
-(defn human-time [date]
-  (time-ago-in-words (tc/to-long (tc/from-date date))
-                     (tc/to-long (time/now))))
+(defpartial layout [& content]
+  (page-wrapper
+   [:div.row [:div.span14
+              (session/flash-get)
+              content]]))
+
+(defpartial titled-layout [title & content]
+  (page-wrapper
+    [:div.page-header [:h1 title]]
+    [:div.row [:div.span14
+               (session/flash-get)
+               content]]))

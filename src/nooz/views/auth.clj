@@ -3,11 +3,10 @@
             [noir.validation :as vali]
             [noir.session :as session]
             [clojure.string :as string]
-            [clj-time.core :as time]
-            [clj-time.format :as tformat]
-            [clj-time.coerce :as tcoerce]
-            [nooz.views.common :as common]
             [nooz.crypto :as crypto]
+            [nooz.time :as nt]
+            [nooz.views.common :as common]
+            [nooz.views.item :as item]
             [nooz.models.user :as user]
             [nooz.models.post :as post]
             [nooz.models.comment :as comment])
@@ -23,11 +22,15 @@
                                     password-field
                                     drop-down]]))
 
+;; ----- HELPER FUNCTIONS ----------------------------------------------------
+
 (defn profile-link
   ([]
      (str "/user/" (session/get :username)))
   ([user]
      (str "/user/" (:username user))))
+
+;; ----- PARTIALS ------------------------------------------------------------
 
 (defpartial login-form [{:keys [username] :as usr}]
   (form-to [:post "/login"]
@@ -95,7 +98,7 @@
       [:table.bordered-table
        [:tr
         [:td [:strong "Member for"]]
-        [:td (common/human-time (:created_at user))]]
+        [:td (nt/human-time (:created_at user))]]
        [:tr
         [:td [:strong "Submissions"]]
         (let [submissions (post/get-post-count-for-user user)]
@@ -145,6 +148,8 @@
        (vali/on-error :about common/error-inline)
        [:span.help-block "256 character maximum."]]]
      [:div.actions [:button.primary.btn "Update"]]]))
+
+;; ----- HTTP HANDLERS -------------------------------------------------------
 
 (defpage "/login" {:as user}
   (common/layout (login-form user)))
@@ -241,3 +246,10 @@
         (do
           (common/boo! "There was a problem updating your information.")
           (common/layout (about-form args)))))))
+
+(defpage "/user/:user_id/submissions" {:as args}
+  (let [username (:user_id args)]
+    (common/titled-layout
+     (str username "'s submissions")
+     (item/post-list (nt/as-long (nt/now))
+                     (post/get-posts-for-name username)))))
