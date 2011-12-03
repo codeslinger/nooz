@@ -1,4 +1,4 @@
-(ns nooz.views.auth
+(ns nooz.views.user
   (:require [noir.response :as resp]
             [noir.validation :as vali]
             [noir.session :as session]
