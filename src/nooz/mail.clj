@@ -1,12 +1,11 @@
 (ns nooz.mail
-  (:require [nooz.crypto :as crypto]
-            [postal.core :as mail])
+  (:require [postal.core :as mail])
   (:use [clojure.contrib.strint :only [<<]]
         [nooz.server :only [*app-name* *app-host*]]))
 
 (defn registration-message [user name host]
-  (let [email (:email user)
-        token (crypto/wrap-web-safe (:confirmation_token user))]
+  (let [email (get user "email")
+        token (get user "token")]
     {:from (<< "help@~{host}")
      :to email
      :subject (<< "~{host}: New ~{name} Account ~{email}")
@@ -24,5 +23,5 @@ this message or email help@~{host}.
 Thank you for using ~{name}!")}))
 
 (defn send-registration-message! [user]
-  (mail/send-message
-   (registration-message user *app-name* *app-host*)))
+  (let [msg (registration-message user *app-name* *app-host*)]
+    (mail/send-message msg)))

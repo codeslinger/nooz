@@ -1,26 +1,26 @@
 (ns nooz.models.post
   (:require [noir.validation :as vali]
             [noir.session :as session]
-            [clj-time.core :as time]
-            [clj-time.coerce :as coerce]
+            [redis.core :as redis]
             [nooz.crypto :as crypto]
-            [nooz.db :as db]
-            [nooz.mail :as mail])
-  (:use korma.core)
-  (:import java.sql.Timestamp
-           java.net.URI
+            [nooz.mail :as mail]
+            [nooz.time :as nt]
+            [nooz.db :as db])
+  (:import java.net.URI
            java.net.URISyntaxException))
 
 (def *min-title-length* 3)
 (def *max-title-length* 80)
 (def *max-url-length* 1024)
 
+(defn- post-key [post] (str "post:" (:id post)))
+(defn- user-posts-key [username] (str "p4u:" username))
+
 (defn- valid-url? [url]
   (try
    (let [u (URI. url)]
-     (or
-      (= (.getScheme u) "http")
-      (= (.getScheme u) "https")))
+     (or (= (.getScheme u) "http")
+         (= (.getScheme u) "https")))
    (catch URISyntaxException e
      false)))
 
@@ -41,33 +41,46 @@
              [:url "We only accept HTTP, HTTPS or FTP URLs."])
   (not (vali/errors? :title :url)))
 
-(defn- insert-post! [post user time]
-  (insert db/posts
-    (values {:title (:title post)
-             :url (:url post)
-             :user_id (:id user)
-             :created_at (Timestamp. time)})))
+(defn- record-user-post! [post user time]
+  (let [username (:username user)
+        post-id (:id post)]
+    (redis/zadd (user-posts-key username) (str time ":" post-id))))
+
+(defn- create-post-record [post user time]
+  (-> {}
+      (assoc :id (crypto/gen-id))
+      (assoc :title (:title post))
+      (assoc :url (:url post))
+      (assoc :username (:username user))
+      (assoc :created_at time)
+      (assoc :score 0)))
+
+(defn- save-post! [post user time]
+  (let [final (create-post-record post user time)]
+    (redis/with-server db/prod-redis
+      (redis/atomically
+       (redis/hmset (post-key post) (seq final))
+       (record-user-post! post user time)))))
 
 (defn create-post! [post user]
   (if (valid-new-post? post)
-    (let [now (coerce/to-long (time/now))]
-      (insert-post! post user now))))
+    (let [now (nt/long-now)]
+      (save-post! post user now))))
 
-(defn get-post-by-id [id]
-  (first (select db/posts (where {:id id}) (limit 1))))
+(defn get-post [id]
+  (redis/with-server db/prod-redis
+    (redis/hgetall (post-key id))))
 
-(defn get-latest-posts []
-  (select db/posts (order :created_at :DESC) (limit 30)))
+(defn get-latest-posts [] nil)
 
 (defn get-post-count-for-user [user]
-  (let [user-id (:id user)]
-    (:cnt (first (select db/posts
-                   (aggregate (count :*) :cnt)
-                   (where (= :user_id user-id)))))))
+  (redis/with-server db/prod-redis
+    (redis/zcard (user-posts-key (:username user)))))
 
-(defn get-posts-for-name [username]
-  (select db/posts
-    (with db/users)
-    (where (= :users.username username))))
+(defn get-posts-for-user [username & start]
+  (let [index (or start 0)]
+    (redis/with-server db/prod-redis
+      (redis/zrange (user-posts-key username)) index (+ index 30))))
+
 
 

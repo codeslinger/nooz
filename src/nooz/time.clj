@@ -2,11 +2,7 @@
   (:require [clojure.contrib.math :as math]
             [clj-time.core :as core]
             [clj-time.coerce :as coerce]
-            [clj-time.format :as format])
-  (:import java.sql.Timestamp))
-
-(defn to-sql [t]
-  (Timestamp. t))
+            [clj-time.format :as format]))
 
 (defn long-date [t]
   (coerce/to-long (coerce/from-date t)))
@@ -14,8 +10,14 @@
 (defn as-long [date]
   (coerce/to-long date))
 
+(defn from-long [l]
+  (coerce/from-long (Long. l)))
+
 (defn now []
   (core/now))
+
+(defn long-now []
+  (as-long (now)))
 
 (defn time-ago-in-words [from to]
   (let [diff (/ (- to from) 1000 60)]
@@ -31,4 +33,4 @@
       :else "many months")))
 
 (defn human-time [date]
-  (time-ago-in-words (long-date date) (as-long (now))))
+  (time-ago-in-words (coerce/to-long date) (as-long (now))))

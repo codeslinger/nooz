@@ -2,23 +2,13 @@
   (:require [noir.validation :as vali]
             [noir.session :as session]
             [nooz.time :as nt]
-            [nooz.db :as db]
-            [nooz.models.user :as user])
-  (:use korma.core))
+            [nooz.db :as db]))
 
 (def *max-comment-length* 1000)
 
-(defn get-comment-count-for-user [user]
-  (let [user-id (:id user)]
-    (:cnt (first (select db/comments
-                   (aggregate (count :*) :cnt)
-                   (where (= :user_id user-id)))))))
+(defn get-comment-count-for-user [user] 0)
 
-(defn get-comment-count-for-post [post]
-  (let [post-id (:id post)]
-    (:cnt (first (select db/comments
-                   (aggregate (count :*) :cnt)
-                   (where (= :post_id post-id)))))))
+(defn get-comment-count-for-post [post] 0)
 
 (defn- valid-comment? [{:keys [comment] :as args}]
   (vali/rule (and (vali/has-value? comment)
@@ -28,14 +18,4 @@
                             " characters.")])
   (not (vali/errors? :comment)))
 
-(defn- insert-comment! [comment user time]
-  (insert db/comments
-    (values {:comment (:comment comment)
-             :post_id (Integer. (:post_id comment))
-             :user_id (:id user)
-             :created_at (nt/to-sql time)})))
-
-(defn submit-comment! [post args]
-  (if (valid-comment? args)
-    (let [now (nt/as-long (nt/now))]
-      (insert-comment! args post (user/get-user-from-session) now))))
+(defn submit-comment! [post args] nil)

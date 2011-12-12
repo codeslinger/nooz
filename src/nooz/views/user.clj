@@ -28,7 +28,7 @@
   ([]
      (str "/user/" (session/get :username)))
   ([user]
-     (str "/user/" (:username user))))
+     (str "/user/" (get user "username"))))
 
 ;; ----- PARTIALS ------------------------------------------------------------
 
@@ -69,7 +69,7 @@
     [:table.bordered-table
      [:tr
       [:td [:strong "Email"]]
-      [:td (:email user)]]]]
+      [:td (get user "email")]]]]
    [:div
     (link-to {:class "side-button"}
              (str (profile-link user) "/email")
@@ -83,22 +83,22 @@
              [:button.btn "Change password"])]])
 
 (defpartial profile-view [{:as user}]
-  (let [my-user (= (session/get :username) (:username user))]
+  (let [my-user (= (session/get :username) (get user "username"))]
     [:div.profile
      [:div.profile-head
       [:span.avatar [:img {:src (user/gravatar-url user)
                            :height 48
                            :width 48}]]
-      [:h2 (h (:username user))]]
-     (if (:about user)
+      [:h2 (h (get user "username"))]]
+     (if (get user "about")
        [:div.row
         [:div.span10
-         [:pre (:about user)]]])
+         [:pre (get user "about")]]])
      [:div.span6
       [:table.bordered-table
        [:tr
         [:td [:strong "Member for"]]
-        [:td (nt/human-time (:created_at user))]]
+        [:td (nt/human-time (nt/from-long (get user "created_at")))]]
        [:tr
         [:td [:strong "Submissions"]]
         (let [submissions (post/get-post-count-for-user user)]
@@ -155,15 +155,15 @@
   (common/layout (login-form user)))
 
 (defpage [:post "/login"] {:as user}
-  (if (user/login! user)
+  (if (user/login! (:username user) (:password user))
     (resp/redirect "/")
     (do
       (common/boo! "There was a problem with your credentials.")
       (render "/login" user))))
 
 (defpage "/confirm/:token" {:keys [token]}
-  (let [user (user/get-user-by-token (crypto/unwrap-web-safe token))]
-    (if (not (nil? user))
+  (let [user (user/get-user-by-token token)]
+    (if user
       (do
         (user/confirm-account! user)
         (common/yay! "Your email address has been confirmed."))
@@ -191,7 +191,7 @@
   (resp/redirect "/"))
 
 (defpage "/user/:username" {:keys [username]}
-  (let [user (user/get-user-by-name username)]
+  (let [user (user/get-user username)]
     (common/layout (profile-view user))))
 
 (defpage "/user/:un/email" {:as args}
@@ -202,7 +202,7 @@
 (defpage [:post "/user/:un/email"] {:as args}
   (if-not (= (:un args) (session/get :username))
     (common/borked "You cannot modify that user's account.")
-    (let [user (user/get-user-from-session)]
+    (let [user (user/logged-in-user)]
       (if (user/update-email! user args)
         (do
           (common/yay! "Your email address has been updated.")
@@ -219,7 +219,7 @@
 (defpage [:post "/user/:un/password"] {:as args}
   (if-not (= (:un args) (session/get :username))
     (common/borked "You cannot modify that user's account.")
-    (let [user (user/get-user-from-session)]
+    (let [user (user/logged-in-user)]
       (if (user/update-password! user args)
         (do
           (common/yay! "Your password has been updated.")
@@ -231,14 +231,14 @@
 (defpage "/user/:un/about" {:as args}
   (if (= (:un args) (session/get :username))
     (common/layout (about-form (if (nil? (:about args))
-                                 (user/get-user-from-session)
+                                 (user/logged-in-user)
                                  args)))
     (common/borked "You cannot modify that user's account.")))
 
 (defpage [:post "/user/:un/about"] {:as args}
   (if-not (= (:un args) (session/get :username))
     (common/borked "You cannot modify that user's account.")
-    (let [user (user/get-user-from-session)]
+    (let [user (user/logged-in-user)]
       (if (user/update-about! user args)
         (do
           (common/yay! "Your information has been updated.")
@@ -252,4 +252,4 @@
     (common/titled-layout
      (str username "'s submissions")
      (item/post-list (nt/as-long (nt/now))
-                     (post/get-posts-for-name username)))))
+                     (post/get-posts-for-user username)))))

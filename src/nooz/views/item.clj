@@ -36,7 +36,7 @@
      [:div.actions [:button.primary.btn "Submit"]]]))
 
 (defpartial post-list-item [{:keys [id title url user_id created_at] :as post} now]
-  (let [username (user/get-name-for-id user_id)]
+  (let [username (user/get-user user_id)]
     [:div.clearfix.post
      [:div.span12
       (link-to {:class "title"} url (h title))
@@ -70,20 +70,20 @@
 ;; ----- FILTERS -------------------------------------------------------------
 
 (pre-route "/submit" {}
-           (when-not (user/get-user-from-session)
+           (when (empty? (user/logged-in-user))
              (common/borked "You must be logged in to make a submission.")))
 
 ;; ----- HTTP HANDLERS -------------------------------------------------------
 
 (defpage "/item/:id" {:keys [id]}
-  (let [post (post/get-post-by-id (Integer. id))]
+  (let [post (post/get-post id)]
     (if post
-      (let [now (nt/as-long (nt/now))]
+      (let [now (nt/long-now)]
         (common/layout (post-details now post)))
       (common/borked "Sorry, we could not find the requested item."))))
 
 (defpage [:post "/item/:id/comments"] {:as args}
-  (let [post (post/get-post-by-id (Integer. (:id args)))]
+  (let [post (post/get-post (:id args))]
     (if post
       (let [comment-id (comment/submit-comment! post args)]
         (if comment-id
@@ -97,7 +97,7 @@
   (common/titled-layout "New submission" (new-post-form post)))
 
 (defpage [:post "/submit"] {:as post}
-  (let [post (post/create-post! post (user/get-user-from-session))]
+  (let [post (post/create-post! post (user/logged-in-user))]
     (if post
       (resp/redirect (str "/item/" (:id post)))
       (do
