@@ -4,8 +4,8 @@
         [nooz.server :only [*app-name* *app-host*]]))
 
 (defn registration-message [user name host]
-  (let [email (get user "email")
-        token (get user "token")]
+  (let [email (:email user)
+        token (:token user)]
     {:from (<< "help@~{host}")
      :to email
      :subject (<< "~{host}: New ~{name} Account ~{email}")

@@ -40,7 +40,7 @@
           (nav-link uri "/" "Top")
           (nav-link uri "/latest" "Latest")
           (if (not (nil? username))
-            (nav-link uri "/submit" "Submit"))]
+            (nav-link uri "/submit" "Post"))]
          [:span.pull-right
           (if (nil? username)
             [:ul.nav

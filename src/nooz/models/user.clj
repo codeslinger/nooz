@@ -18,7 +18,8 @@
 
 (defn get-user [username]
   (redis/with-server db/prod-redis
-    (redis/hgetall (user-key username))))
+    (db/keywordize-map
+     (redis/hgetall (user-key username)))))
 
 (defn get-user-by-email [email]
   (let [username (redis/with-server db/prod-redis
@@ -47,7 +48,7 @@
 (defn valid-new-password? [user {:keys [cur-password
                                         password
                                         password-confirm] :as provo}]
-  (vali/rule (crypto/compare-hashes cur-password (get user "password"))
+  (vali/rule (crypto/compare-hashes cur-password (:password user))
              [:cur-password "Current password is incorrect."])
   (valid-password? password password-confirm)
   (not (vali/errors? :cur-password :password)))
@@ -95,17 +96,17 @@
                                    password] :as user}]
   (let [now (nt/long-now)]
     (-> {}
-        (assoc "username" username)
-        (assoc "email" email)
-        (assoc "password" (crypto/gen-hash password))
-        (assoc "created_at" now)
-        (assoc "score" 0)
-        (assoc "token" (crypto/gen-confirmation-token)))))
+        (assoc :username username)
+        (assoc :email email)
+        (assoc :password (crypto/gen-hash password))
+        (assoc :created_at now)
+        (assoc :score 0)
+        (assoc :token (crypto/gen-confirmation-token)))))
 
 (defn- save-user! [{:as user}]
   (let [now (nt/long-now)
-        args (flatten (cons (user-key (get user "username"))
-                            (seq (assoc user "updated_at" now))))]
+        args (flatten (cons (user-key (:username user))
+                            (seq (assoc user :updated_at now))))]
     (apply redis/hmset args)))
 
 (defn create-user! [{:keys [username email] :as user}]
@@ -113,46 +114,46 @@
     (redis/with-server db/prod-redis
       (redis/atomically
        (save-user! final)
-       (redis/set (token-key (get final "token")) username)
-       (redis/set (email-key (get final "email")) username)))
+       (redis/set (token-key (:token final)) username)
+       (redis/set (email-key (:email final)) username)))
     final))
 
 (defn create-session! [username]
   (session/put! :username username))
 
 (defn confirm-account! [{:as user}]
-  (let [username (get user "username")
-        token (get user "token")]
+  (let [username (:username user)
+        token (:token user)]
     (redis/with-server db/prod-redis
       (redis/atomically
        (redis/del (token-key token))
-       (redis/hdel (user-key username) "token")))))
+       (redis/hdel (user-key username) :token)))))
 
 (defn update-password! [user provo]
   (if (valid-new-password? user provo)
     (redis/with-server db/prod-redis
-      (redis/hset (user-key (get user "username"))
-                  "password"
+      (redis/hset (user-key (:username user))
+                  :password
                   (crypto/gen-hash (:password provo))))))
 
 (defn update-email! [user provo]
-  (let [old-email (get user "email")
-        username (get user "username")
+  (let [old-email (:email user)
+        username (:username user)
         new-email (:email provo)]
     (if (valid-email? new-email)
       (redis/with-server db/prod-redis
         (redis/atomically
-         (redis/hset (user-key username) "email" new-email)
+         (redis/hset (user-key username) :email new-email)
          (redis/del (email-key old-email))
          (redis/set (email-key new-email) username))))))
 
 (defn update-about! [user provo]
   (let [about (:about provo)
-        username (get user "username")]
+        username (:username user)]
     (if (valid-about? about)
       (redis/with-server db/prod-redis
         (redis/hset (user-key username)
-                    "about"
+                    :about
                     (:about provo))))))
 
 (defn account-confirmed? [user]
@@ -160,7 +161,7 @@
 
 (defn login! [username password]
   (let [user (get-user username)
-        cur-password (get user "password")]
+        cur-password (:password user)]
     (if-not (empty? user)
       (if-not (account-confirmed? user)
         (vali/set-error
@@ -180,6 +181,6 @@
       (mail/send-registration-message! created))))
 
 (defn gravatar-url [user]
-  (let [canonical (.toLowerCase (.trim (get user "email")))]
+  (let [canonical (.toLowerCase (.trim (:email user)))]
     (format "http://gravatar.com/avatar/%s?s=48&d=mm"
             (crypto/md5 canonical))))

@@ -28,7 +28,7 @@
   ([]
      (str "/user/" (session/get :username)))
   ([user]
-     (str "/user/" (get user "username"))))
+     (str "/user/" (:username user))))
 
 ;; ----- PARTIALS ------------------------------------------------------------
 
@@ -69,36 +69,40 @@
     [:table.bordered-table
      [:tr
       [:td [:strong "Email"]]
-      [:td (get user "email")]]]]
+      [:td (:email user)]]]]
    [:div
     (link-to {:class "side-button"}
              (str (profile-link user) "/email")
-             [:button.btn.small "Update"])]]
+             [:button.btn.small "Update Email"])]]
   [:ul
-   [:li
-    (link-to (str (profile-link user) "/about")
-             [:button.btn "Update Info"])]
    [:li
     (link-to (str (profile-link user) "/password")
              [:button.btn "Change password"])]])
 
 (defpartial profile-view [{:as user}]
-  (let [my-user (= (session/get :username) (get user "username"))]
+  (let [my-user (= (session/get :username) (:username user))]
     [:div.profile
      [:div.profile-head
       [:span.avatar [:img {:src (user/gravatar-url user)
                            :height 48
                            :width 48}]]
-      [:h2 (h (get user "username"))]]
-     (if (get user "about")
-       [:div.row
-        [:div.span10
-         [:pre (get user "about")]]])
+      [:h2 (h (:username user))]]
+     (if (:about user)
+       [:div
+        [:div.row
+         [:div.span10 [:pre (:about user)]]
+         (if my-user
+           [:div.span4
+            (link-to (str (profile-link user) "/about")
+                     [:button.btn.small "Update Info"])])]])
      [:div.span6
       [:table.bordered-table
        [:tr
         [:td [:strong "Member for"]]
-        [:td (nt/human-time (nt/from-long (get user "created_at")))]]
+        [:td (nt/human-time (nt/from-long (:created_at user)))]]
+       [:tr
+        [:td [:strong "Score"]]
+        [:td (:score user)]]
        [:tr
         [:td [:strong "Submissions"]]
         (let [submissions (post/get-post-count-for-user user)]
@@ -196,7 +200,7 @@
 
 (defpage "/user/:un/email" {:as args}
   (if (= (:un args) (session/get :username))
-    (common/layout (email-change-form args))
+    (common/titled-layout "Change email" (email-change-form args))
     (common/borked "You cannot modify that user's account.")))
 
 (defpage [:post "/user/:un/email"] {:as args}
@@ -213,7 +217,7 @@
 
 (defpage "/user/:un/password" {:as args}
   (if (= (:un args) (session/get :username))
-    (common/layout (password-change-form args))
+    (common/titled-layout "Change password" (password-change-form args))
     (common/borked "You cannot modify that user's account.")))
 
 (defpage [:post "/user/:un/password"] {:as args}
@@ -230,9 +234,10 @@
 
 (defpage "/user/:un/about" {:as args}
   (if (= (:un args) (session/get :username))
-    (common/layout (about-form (if (nil? (:about args))
-                                 (user/logged-in-user)
-                                 args)))
+    (common/titled-layout "Change about info"
+                          (about-form (if (nil? (:about args))
+                                        (user/logged-in-user)
+                                        args)))
     (common/borked "You cannot modify that user's account.")))
 
 (defpage [:post "/user/:un/about"] {:as args}
