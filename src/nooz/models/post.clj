@@ -9,9 +9,10 @@
   (:import java.net.URI
            java.net.URISyntaxException))
 
-(def *min-title-length* 3)
-(def *max-title-length* 80)
-(def *max-url-length* 1024)
+(def min-title-length 3)
+(def max-title-length 80)
+(def max-url-length 1024)
+(def posts-per-page 30)
 (def latest-news-key "posts.time")
 (def top-news-key "posts.top")
 (def url-repost-barrier-seconds (* 3600 48))
@@ -42,16 +43,16 @@
   (vali/rule (user-posted-too-recently? user)
              [:title "You're posting too fast. Slow down, chief."])
   (vali/rule (and (vali/has-value? title)
-                  (vali/min-length? title *min-title-length*))
-             [:title (str "Title must be at least " *min-title-length* " characters.")])
+                  (vali/min-length? title min-title-length))
+             [:title (str "Title must be at least " min-title-length " characters.")])
   (vali/rule (or (vali/errors? :title)
-                 (vali/max-length? title *max-title-length*))
-             [:title (str "Too long. " *max-title-length* " characters or less, please.")])
+                 (vali/max-length? title max-title-length))
+             [:title (str "Too long. " max-title-length " characters or less, please.")])
   (vali/rule (vali/has-value? url)
              [:url "URL cannot be blank."])
   (vali/rule (or (vali/errors? :url)
-                 (vali/max-length? url *max-url-length*))
-             [:url (str "Too long. " *max-url-length* " characters or less, please.")])
+                 (vali/max-length? url max-url-length))
+             [:url (str "Too long. " max-url-length " characters or less, please.")])
   (vali/rule (or (vali/errors? :url)
                  (valid-url? url))
              [:url "We only accept HTTP, HTTPS or FTP URLs."])
@@ -102,11 +103,11 @@
     (redis/with-server db/prod-redis
       (redis/atomically
        (record-post! post)
-       (record-user-post! post user time)
-       (add-news-chronologically post time)
-       (add-news-by-rank post time)
-       (create-url-barrier post)
-       (create-repost-barrier user))))))
+       (record-post-for-user! post user time)
+       (add-news-chronologically! post time)
+       (add-news-by-rank! post time)
+       (create-url-barrier! post)
+       (create-repost-barrier! user))))))
 
 (defn create-post! [post user]
   (if (valid-new-post? post user)
@@ -117,7 +118,19 @@
   (redis/with-server db/prod-redis
     (redis/hgetall (post-key id))))
 
-(defn get-latest-posts [] nil)
+(defn get-latest-posts [& start]
+  (let [index (or start 0)]
+    (redis/with-server db/prod-redis
+      (redis/zrange latest-news-key
+                    index
+                    (+ index (- posts-per-page 1)))))))
+
+(defn get-ranked-posts [& start]
+  (let [index (or start 0)]
+    (redis/with-server db/prod-redis
+      (redis/zrange top-news-key
+                    index
+                    (+ index (- posts-per-page 1))))))
 
 (defn get-post-count-for-user [user]
   (redis/with-server db/prod-redis
@@ -128,4 +141,4 @@
     (redis/with-server db/prod-redis
       (redis/zrange (user-posts-key username)
                     index
-                    (+ index 30)))))
+                    (+ index (- posts-per-page 1))))))
