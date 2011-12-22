@@ -15,7 +15,7 @@
        :doc "Algorithm to seed random numbers."}
      seed-algorithm
      "SHA1PRNG")
-(def ^{:private true} rand (new Random))
+(def ^{:private true} rando (new Random))
 (def ^{:private true} idkey "nextid")
 (def ^{:private true} epochStart 1387263000)
 
@@ -23,9 +23,8 @@
   "Generate a random unique ID."
   ([]
      (let [ms (- (nt/long-now) epochStart)
-           r (.nextLong rand)
-           id (mod (Integer/parseInt (redis/with-server db/prod-redis
-                                       (redis/incr idkey)))
+           r (.nextLong rando)
+           id (mod (redis/with-server db/prod-redis (redis/incr idkey))
                    1024)]
        (bit-or
         (bit-or (bit-shift-left (bit-and ms 0x000001FFFFFFFFFF) 23)
