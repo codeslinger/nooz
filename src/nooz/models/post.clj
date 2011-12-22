@@ -30,18 +30,18 @@
    (catch URISyntaxException e
      false)))
 
-(defn- posted-too-recently? [{:keys [url] :as post}]
+(defn- url-can-be-posted? [{:keys [url] :as post}]
   (redis/with-server db/prod-redis
-    (not (nil? (redis/get (url-key url))))))
+    (nil? (redis/get (url-key url)))))
 
-(defn- user-posted-too-recently? [{:keys [username] :as user}]
+(defn- user-can-post? [{:keys [username] :as user}]
   (redis/with-server db/prod-redis
-    (not (nil? (redis/get (user-repost-key username))))))
+    (nil? (redis/get (user-repost-key username)))))
 
 (defn- valid-new-post? [post user]
   (let [title (:title post)
         url (:url post)]
-    (vali/rule (not (user-posted-too-recently? user))
+    (vali/rule (user-can-post? user)
                [:title "You're posting too fast. Slow down, chief."])
     (vali/rule (and (vali/has-value? title)
                     (vali/min-length? title min-title-length))
@@ -58,12 +58,13 @@
                    (valid-url? url))
                [:url "We only accept HTTP or HTTPS URLs."])
     (vali/rule (or (vali/errors? :url)
-                   (posted-too-recently? url))
+                   (url-can-be-posted? url))
                [:url "This URL has already been posted."])
     (not (vali/errors? :title :url))))
 
 (defn- record-post! [post]
-  (redis/hmset (post-key post) (seq post)))
+  (let [args (flatten (cons (post-key post) (seq post)))]
+    (apply redis/hmset args)))
 
 (defn- record-post-for-user! [post user time]
   (let [username (:username user)
@@ -102,13 +103,12 @@
 (defn- save-post! [p user time]
   (let [post (create-post-record p user time)]
     (redis/with-server db/prod-redis
-      (redis/atomically
-       (record-post! post)
-       (record-post-for-user! post user time)
-       (add-news-chronologically! post time)
-       (add-news-by-rank! post time)
-       (create-url-barrier! post)
-       (create-repost-barrier! user)))))
+      (record-post! post)
+      (record-post-for-user! post user time)
+      (add-news-chronologically! post time)
+      (add-news-by-rank! post time)
+      (create-url-barrier! post)
+      (create-repost-barrier! user))))
 
 (defn create-post! [post user]
   (if (valid-new-post? post user)
