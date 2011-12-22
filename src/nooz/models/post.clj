@@ -32,7 +32,7 @@
 
 (defn- posted-too-recently? [{:keys [url] :as post}]
   (redis/with-server db/prod-redis
-    (not (nil? (redis/get (url-key url)))))
+    (not (nil? (redis/get (url-key url))))))
 
 (defn- user-posted-too-recently? [{:keys [username] :as user}]
   (redis/with-server db/prod-redis
@@ -41,7 +41,7 @@
 (defn- valid-new-post? [post user]
   (let [title (:title post)
         url (:url post)]
-    (vali/rule (user-posted-too-recently? user)
+    (vali/rule (not (user-posted-too-recently? user))
                [:title "You're posting too fast. Slow down, chief."])
     (vali/rule (and (vali/has-value? title)
                     (vali/min-length? title min-title-length))
@@ -108,7 +108,7 @@
        (add-news-chronologically! post time)
        (add-news-by-rank! post time)
        (create-url-barrier! post)
-       (create-repost-barrier! user))))))
+       (create-repost-barrier! user)))))
 
 (defn create-post! [post user]
   (if (valid-new-post? post user)
