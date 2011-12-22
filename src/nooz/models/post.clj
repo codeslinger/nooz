@@ -3,7 +3,6 @@
             [noir.session :as session]
             [redis.core :as redis]
             [nooz.crypto :as crypto]
-            [nooz.mail :as mail]
             [nooz.time :as nt]
             [nooz.db :as db])
   (:import java.net.URI
@@ -39,27 +38,29 @@
   (redis/with-server db/prod-redis
     (not (nil? (redis/get (user-repost-key username))))))
 
-(defn- valid-new-post? [{:keys [title url] :as post} user]
-  (vali/rule (user-posted-too-recently? user)
-             [:title "You're posting too fast. Slow down, chief."])
-  (vali/rule (and (vali/has-value? title)
-                  (vali/min-length? title min-title-length))
-             [:title (str "Title must be at least " min-title-length " characters.")])
-  (vali/rule (or (vali/errors? :title)
-                 (vali/max-length? title max-title-length))
-             [:title (str "Too long. " max-title-length " characters or less, please.")])
-  (vali/rule (vali/has-value? url)
-             [:url "URL cannot be blank."])
-  (vali/rule (or (vali/errors? :url)
-                 (vali/max-length? url max-url-length))
-             [:url (str "Too long. " max-url-length " characters or less, please.")])
-  (vali/rule (or (vali/errors? :url)
-                 (valid-url? url))
-             [:url "We only accept HTTP, HTTPS or FTP URLs."])
-  (vali/rule (or (vali/errors? :url)
-                 (posted-too-recently? url))
-             [:url "This URL has already been posted recently."])
-  (not (vali/errors? :title :url)))
+(defn- valid-new-post? [post user]
+  (let [title (:title post)
+        url (:url post)]
+    (vali/rule (user-posted-too-recently? user)
+               [:title "You're posting too fast. Slow down, chief."])
+    (vali/rule (and (vali/has-value? title)
+                    (vali/min-length? title min-title-length))
+               [:title (str "Title must be at least " min-title-length " characters.")])
+    (vali/rule (or (vali/errors? :title)
+                   (vali/max-length? title max-title-length))
+               [:title (str "Too long. " max-title-length " characters or less, please.")])
+    (vali/rule (vali/has-value? url)
+               [:url "URL cannot be blank."])
+    (vali/rule (or (vali/errors? :url)
+                   (vali/max-length? url max-url-length))
+               [:url (str "Too long. " max-url-length " characters or less, please.")])
+    (vali/rule (or (vali/errors? :url)
+                   (valid-url? url))
+               [:url "We only accept HTTP or HTTPS URLs."])
+    (vali/rule (or (vali/errors? :url)
+                   (posted-too-recently? url))
+               [:url "This URL has already been posted."])
+    (not (vali/errors? :title :url))))
 
 (defn- record-post! [post]
   (redis/hmset (post-key post) (seq post)))
@@ -123,7 +124,7 @@
     (redis/with-server db/prod-redis
       (redis/zrange latest-news-key
                     index
-                    (+ index (- posts-per-page 1)))))))
+                    (+ index (- posts-per-page 1))))))
 
 (defn get-ranked-posts [& start]
   (let [index (or start 0)]

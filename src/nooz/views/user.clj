@@ -87,14 +87,16 @@
                            :height 48
                            :width 48}]]
       [:h2 (h (:username user))]]
-     (if (:about user)
-       [:div
-        [:div.row
-         [:div.span10 [:pre (:about user)]]
-         (if my-user
-           [:div.span4
-            (link-to (str (profile-link user) "/about")
-                     [:button.btn.small "Update Info"])])]])
+     [:div
+      [:div.row
+       (if (:about user)
+         [:div.span10 [:pre (:about user)]])
+       (if my-user
+         [:div.span4
+          (link-to (str (profile-link user) "/about")
+                   [:button.btn.small "Update About"])])
+       [:br]
+       [:br]]]
      [:div.span6
       [:table.bordered-table
        [:tr
