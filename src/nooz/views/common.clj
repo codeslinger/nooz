@@ -29,7 +29,7 @@
     (html5
      [:head
       [:title *app-name*]
-      (include-css "http://twitter.github.com/bootstrap/1.4.0/bootstrap.min.css")
+      (include-css "/css/bootstrap.min.css")
       (include-css "/css/style.css")]
      [:body
       [:div.topbar
