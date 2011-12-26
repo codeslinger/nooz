@@ -82,10 +82,11 @@
 
 (defpage "/item/:id" {:keys [id]}
   (let [post (post/get-post id)]
-    (if post
+    (if (or (nil? post)
+            (empty? post))
+      (common/borked "Sorry, we could not find the requested item.")
       (let [now (nt/long-now)]
-        (common/layout (post-details now post)))
-      (common/borked "Sorry, we could not find the requested item."))))
+        (common/layout (post-details now post))))))
 
 (defpage [:post "/item/:id/comments"] {:as args}
   (let [post (post/get-post (:id args))]

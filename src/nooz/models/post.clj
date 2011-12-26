@@ -106,7 +106,8 @@
       (add-news-chronologically! post time)
       (add-news-by-rank! post time)
       (create-url-barrier! post)
-      (create-repost-barrier! user))))
+      (create-repost-barrier! user)
+      post)))
 
 (defn create-post! [post user]
   (if (valid-new-post? post user)
