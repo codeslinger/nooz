@@ -53,7 +53,8 @@
         [:span "(" (link-to (str "/item/" id) (str comments " " label)) ")"])]]))
 
 (defpartial post-list [time posts]
-  (map #(post-list-item %1 time) posts))
+  (map #(post-list-item %1 time)
+       (map #(post/get-post %1) posts)))
 
 (defpartial comment-form [post_id]
   (form-to [:post (str "/item/" post_id "/comments")]
