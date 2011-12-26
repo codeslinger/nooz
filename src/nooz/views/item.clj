@@ -35,8 +35,12 @@
      (common/form-item :url "URL" (text-field {:class "span6"} "url" url))
      [:div.actions [:button.primary.btn "Submit"]]]))
 
-(defpartial post-list-item [{:keys [id title url user_id created_at] :as post} now]
-  (let [username (user/get-user user_id)]
+(defpartial post-list-item [post now]
+  (let [id (get post "id")
+        title (get post "title")
+        url (get post "url")
+        username (get post "username")
+        created_at (Long. (get post "created_at"))]
     [:div.clearfix.post
      [:div.span12
       (link-to {:class "title"} url (h title))
@@ -46,15 +50,15 @@
       [:span " "]
       [:span (link-to (str "/user/" username) (h username))]
       [:span " "]
-      [:span (str (nt/time-ago-in-words (nt/long-date created_at) now) " ago")]
+      [:span (str (nt/time-ago-in-words created_at now) " ago")]
       [:span " "]
       (let [comments (comment/get-comment-count-for-post post)
             label (if (= 1 comments) "comment" "comments")]
         [:span "(" (link-to (str "/item/" id) (str comments " " label)) ")"])]]))
 
 (defpartial post-list [time posts]
-  (map #(post-list-item %1 time)
-       (map #(post/get-post %1) posts)))
+  (let [full-posts (map #(post/get-post %1) posts)]
+    (map #(post-list-item %1 time) full-posts)))
 
 (defpartial comment-form [post_id]
   (form-to [:post (str "/item/" post_id "/comments")]
@@ -66,7 +70,7 @@
 
 (defpartial post-details [time post]
   (post-list-item post time)
-  (comment-form (:id post)))
+  (comment-form (get post "id")))
 
 ;; ----- FILTERS -------------------------------------------------------------
 
@@ -100,7 +104,7 @@
 (defpage [:post "/submit"] {:as post}
   (let [post (post/create-post! post (user/logged-in-user))]
     (if post
-      (resp/redirect (str "/item/" (:id post)))
+      (resp/redirect (str "/item/" (get post "id")))
       (do
         (common/boo! "There were some problems with your submission.")
         (render "/submit" post)))))

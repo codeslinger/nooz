@@ -6,11 +6,13 @@
   (:use [noir.core :only [defpage]]))
 
 (defpage "/" {}
-  (common/layout (item/post-list (nt/as-long (nt/now))
-                                 (post/get-latest-posts))))
+  (let [time (nt/long-now)
+        posts (post/get-ranked-posts)]
+    (common/layout (item/post-list time posts))))
 
 (defpage "/latest" {}
-  (common/layout (item/post-list (nt/as-long (nt/now))
-                                 (post/get-latest-posts))))
+  (let [time (nt/long-now)
+        posts (post/get-latest-posts)]
+    (common/layout (item/post-list time posts))))
 
 
