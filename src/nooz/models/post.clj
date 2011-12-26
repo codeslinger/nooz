@@ -61,19 +61,19 @@
   (not (vali/errors? :title :url)))
 
 (defn- record-post! [post]
-  (let [args (flatten (cons (post-key (get post "id")) (seq post)))]
-    (apply redis/hmset args)))
+  (let [post-key (post-key (get post "id"))]
+    (db/record-obj! post-key post)))
 
 (defn- record-post-for-user! [post user time]
   (let [username (:username user)
         post-id (get post "id")]
     (redis/zadd (user-posts-key username) time post-id)))
 
-(defn- add-news-chronologically! [post time]
+(defn- add-post-chronologically! [post time]
   (let [post-id (get post "id")]
     (redis/zadd latest-news-key time post-id)))
 
-(defn- add-news-by-rank! [post item]
+(defn- add-post-by-rank! [post item]
   (let [post-id (get post "id")
         score (get post "score")]
     (redis/zadd top-news-key score post-id)))
@@ -83,7 +83,7 @@
                url-repost-barrier-seconds
                (get post "id")))
 
-(defn- create-repost-barrier! [user]
+(defn- install-repost-barrier! [user]
   (redis/setex (user-repost-key (:username user))
                user-repost-barrier-seconds
                "1"))
@@ -103,10 +103,10 @@
     (redis/with-server db/prod-redis
       (record-post! post)
       (record-post-for-user! post user time)
-      (add-news-chronologically! post time)
-      (add-news-by-rank! post time)
+      (add-post-chronologically! post time)
+      (add-post-by-rank! post time)
       (create-url-barrier! post)
-      (create-repost-barrier! user)
+      (install-repost-barrier! user)
       post)))
 
 (defn create-post! [post user]
