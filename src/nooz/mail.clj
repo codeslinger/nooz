@@ -1,7 +1,7 @@
 (ns nooz.mail
   (:require [postal.core :as mail])
   (:use [clojure.contrib.strint :only [<<]]
-        [nooz.server :only [*app-name* *app-host*]]))
+        [nooz.constants :only [app-name app-host]]))
 
 (defn registration-message [user name host]
   (let [email (:email user)
@@ -23,5 +23,5 @@ this message or email help@~{host}.
 Thank you for using ~{name}!")}))
 
 (defn send-registration-message! [user]
-  (let [msg (registration-message user *app-name* *app-host*)]
+  (let [msg (registration-message user app-name app-host)]
     (mail/send-message msg)))

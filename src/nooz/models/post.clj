@@ -2,25 +2,12 @@
   (:require [noir.validation :as vali]
             [noir.session :as session]
             [redis.core :as redis]
+            [nooz.constants :as const]
             [nooz.crypto :as crypto]
             [nooz.time :as nt]
             [nooz.db :as db])
   (:import java.net.URI
            java.net.URISyntaxException))
-
-(def min-title-length 3)
-(def max-title-length 80)
-(def max-url-length 1024)
-(def posts-per-page 30)
-(def latest-news-key "posts.time")
-(def top-news-key "posts.top")
-(def url-repost-barrier-seconds (* 3600 48))
-(def user-repost-barrier-seconds (* 60 15))
-
-(defn- url-key [url] (str "url:" url))
-(defn- post-key [id] (str "post:" id))
-(defn- user-posts-key [username] (str "user:" username ":posts"))
-(defn- user-repost-key [username] (str "user:" username ":repost"))
 
 (defn- valid-url? [url]
   (try
@@ -32,26 +19,26 @@
 
 (defn- url-can-be-posted? [post]
   (redis/with-server db/prod-redis
-    (nil? (redis/get (url-key (get post "url"))))))
+    (nil? (redis/get (const/url-key (get post "url"))))))
 
 (defn- user-can-post? [{:keys [username] :as user}]
   (redis/with-server db/prod-redis
-    (nil? (redis/get (user-repost-key username)))))
+    (nil? (redis/get (const/user-repost-key username)))))
 
 (defn- valid-new-post? [{:keys [title url] :as post} user]
   (vali/rule (user-can-post? user)
              [:title "You're posting too fast. Slow down, chief."])
   (vali/rule (and (vali/has-value? title)
-                  (vali/min-length? title min-title-length))
-             [:title (str "Title must be at least " min-title-length " characters.")])
+                  (vali/min-length? title const/min-title-length))
+             [:title (str "Title must be at least " const/min-title-length " characters.")])
   (vali/rule (or (vali/errors? :title)
-                 (vali/max-length? title max-title-length))
-             [:title (str "Too long. " max-title-length " characters or less, please.")])
+                 (vali/max-length? title const/max-title-length))
+             [:title (str "Too long. " const/max-title-length " characters or less, please.")])
   (vali/rule (vali/has-value? url)
              [:url "URL cannot be blank."])
   (vali/rule (or (vali/errors? :url)
-                 (vali/max-length? url max-url-length))
-             [:url (str "Too long. " max-url-length " characters or less, please.")])
+                 (vali/max-length? url const/max-url-length))
+             [:url (str "Too long. " const/max-url-length " characters or less, please.")])
   (vali/rule (or (vali/errors? :url)
                  (valid-url? url))
              [:url "We only accept HTTP or HTTPS URLs."])
@@ -61,31 +48,31 @@
   (not (vali/errors? :title :url)))
 
 (defn- record-post! [post]
-  (let [post-key (post-key (get post "id"))]
+  (let [post-key (const/post-key (get post "id"))]
     (db/record-obj! post-key post)))
 
 (defn- record-post-for-user! [post user time]
   (let [username (:username user)
         post-id (get post "id")]
-    (redis/zadd (user-posts-key username) time post-id)))
+    (redis/zadd (const/user-posts-key username) time post-id)))
 
 (defn- add-post-chronologically! [post time]
   (let [post-id (get post "id")]
-    (redis/zadd latest-news-key time post-id)))
+    (redis/zadd const/latest-news-key time post-id)))
 
 (defn- add-post-by-rank! [post item]
   (let [post-id (get post "id")
         score (get post "score")]
-    (redis/zadd top-news-key score post-id)))
+    (redis/zadd const/top-news-key score post-id)))
 
 (defn- create-url-barrier! [post]
-  (redis/setex (url-key (get post "url"))
-               url-repost-barrier-seconds
+  (redis/setex (const/url-key (get post "url"))
+               const/url-repost-barrier-seconds
                (get post "id")))
 
 (defn- install-repost-barrier! [user]
-  (redis/setex (user-repost-key (:username user))
-               user-repost-barrier-seconds
+  (redis/setex (const/user-repost-key (:username user))
+               const/user-repost-barrier-seconds
                "1"))
 
 (defn- create-post-record [post user time]
@@ -116,29 +103,29 @@
 
 (defn get-post [id]
   (redis/with-server db/prod-redis
-    (redis/hgetall (post-key id))))
+    (redis/hgetall (const/post-key id))))
 
 (defn get-latest-posts [& start]
   (let [index (or start 0)]
     (redis/with-server db/prod-redis
-      (redis/zrange latest-news-key
+      (redis/zrange const/latest-news-key
                     index
-                    (+ index (- posts-per-page 1))))))
+                    (+ index (- const/posts-per-page 1))))))
 
 (defn get-ranked-posts [& start]
   (let [index (or start 0)]
     (redis/with-server db/prod-redis
-      (redis/zrange top-news-key
+      (redis/zrange const/top-news-key
                     index
-                    (+ index (- posts-per-page 1))))))
+                    (+ index (- const/posts-per-page 1))))))
 
 (defn get-post-count-for-user [user]
   (redis/with-server db/prod-redis
-    (redis/zcard (user-posts-key (:username user)))))
+    (redis/zcard (const/user-posts-key (:username user)))))
 
 (defn get-posts-for-user [username & start]
   (let [index (or start 0)]
     (redis/with-server db/prod-redis
-      (redis/zrange (user-posts-key username)
+      (redis/zrange (const/user-posts-key username)
                     index
-                    (+ index (- posts-per-page 1))))))
+                    (+ index (- const/posts-per-page 1))))))

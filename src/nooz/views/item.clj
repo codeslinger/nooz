@@ -60,7 +60,7 @@
   (let [full-posts (map #(post/get-post %1) posts)]
     (map #(post-list-item %1 time) full-posts)))
 
-(defpartial comment-form [post_id]
+(defpartial comment-form [post_id & parent_id]
   (form-to [:post (str "/item/" post_id "/comments")]
     [:div.comment-box
      (text-area "comment")
@@ -78,6 +78,10 @@
            (when (empty? (user/logged-in-user))
              (common/borked "You must be logged in to make a submission.")))
 
+(pre-route "/item/:id/comments" {}
+           (when (empty? (user/logged-in-user))
+             (common/borked "You must be logged in to post a comment.")))
+
 ;; ----- HTTP HANDLERS -------------------------------------------------------
 
 (defpage "/item/:id" {:keys [id]}
@@ -89,9 +93,10 @@
         (common/layout (post-details now post))))))
 
 (defpage [:post "/item/:id/comments"] {:as args}
-  (let [post (post/get-post (:id args))]
+  (let [post (post/get-post id)
+        user (user/logged-in-user)]
     (if post
-      (let [comment-id (comment/submit-comment! post args)]
+      (let [comment-id (comment/create-comment! post user args)]
         (if comment-id
           (resp/redirect (str "/item/" (:id post) "/comments/" comment-id))
           (do

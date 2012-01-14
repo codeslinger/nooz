@@ -1,12 +1,8 @@
 (ns nooz.server
   (:require [noir.server :as server]
+            [nooz.constants :as const]
             [nooz.db :as db])
   (:use ring.middleware.session.cookie))
-
-(def *app-host* "localhost:8080")
-(def *app-name* "Nooz")
-(def *secret-key* "DEADBEEFCAFEMOOP")
-(def *max-session-age-seconds* 1209600)
 
 (def server-config
      (atom {:mode :dev
@@ -21,8 +17,8 @@
   (let [cfg @server-config]
     (server/start (:port cfg)
                   {:mode (:mode cfg)
-                   :session-store (cookie-store {:key *secret-key*})
-                   :session-cookie-attrs {:max-age *max-session-age-seconds*
+                   :session-store (cookie-store {:key const/secret-key})
+                   :session-cookie-attrs {:max-age const/max-session-age-seconds
                                           :http-only true}})))
 
 (defn restart-server! []

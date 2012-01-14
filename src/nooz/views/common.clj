@@ -14,7 +14,7 @@
                                     text-field
                                     password-field
                                     label]]
-        [nooz.server :only [*app-name*]]))
+        [nooz.constants :only [app-name]]))
 
 (defn nav-link [uri target label]
   (if (= uri target)
@@ -28,14 +28,14 @@
         uri (:uri (req/ring-request))]
     (html5
      [:head
-      [:title *app-name*]
+      [:title app-name]
       (include-css "/css/bootstrap.min.css")
       (include-css "/css/style.css")]
      [:body
       [:div.topbar
        [:div.fill
         [:div.container
-         (link-to {:class "brand"} "/" *app-name*)
+         (link-to {:class "brand"} "/" app-name)
          [:ul.nav
           (nav-link uri "/" "Top")
           (nav-link uri "/latest" "Latest")

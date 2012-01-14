@@ -2,34 +2,26 @@
   (:require [noir.validation :as vali]
             [noir.session :as session]
             [redis.core :as redis]
+            [nooz.constants :as const]
             [nooz.crypto :as crypto]
             [nooz.mail :as mail]
             [nooz.time :as nt]
             [nooz.db :as db]))
 
-(def *min-username-length* 3)
-(def *max-username-length* 64)
-(def *max-about-length* 256)
-(def *max-email-length* 256)
-
-(defn- user-key [username] (str "user:" username))
-(defn- email-key [email] (str "email:" email))
-(defn- token-key [token] (str "token:" token))
-
 (defn get-user [username]
   (redis/with-server db/prod-redis
     (db/keywordize-map
-     (redis/hgetall (user-key username)))))
+     (redis/hgetall (const/user-key username)))))
 
 (defn get-user-by-email [email]
   (let [username (redis/with-server db/prod-redis
-                   (redis/get (email-key email)))]
+                   (redis/get (const/email-key email)))]
     (if username
       (get-user username))))
 
 (defn get-user-by-token [token]
   (let [username (redis/with-server db/prod-redis
-                   (redis/get (token-key token)))]
+                   (redis/get (const/token-key token)))]
     (if username
       (get-user username))))
 
@@ -54,9 +46,9 @@
   (not (vali/errors? :cur-password :password)))
 
 (defn valid-email? [email]
-  (vali/rule (vali/max-length? email *max-email-length*)
+  (vali/rule (vali/max-length? email const/max-email-length)
              [:email (str "Too long. "
-                          *max-email-length*
+                          const/max-email-length
                           " characters or less, please.")])
   (vali/rule (or (vali/errors? :email)
                  (vali/is-email? email))
@@ -67,9 +59,9 @@
   (not (vali/errors? :email)))
 
 (defn valid-about? [about]
-  (vali/rule (vali/max-length? about *max-about-length*)
+  (vali/rule (vali/max-length? about const/max-about-length)
              [:about (str "Too long. "
-                          *max-about-length*
+                          const/max-about-length
                           " characters or less.")])
   (not (vali/errors? :about)))
 
@@ -79,13 +71,13 @@
                                password-confirm] :as user}]
   (vali/rule (empty? (get-user username))
              [:username "That username is already taken"])
-  (vali/rule (vali/min-length? username *min-username-length*)
+  (vali/rule (vali/min-length? username const/min-username-length)
              [:username (str "Username must be at least "
-                             *min-username-length*
+                             const/min-username-length
                              " characters.")])
-  (vali/rule (vali/max-length? username *max-about-length*)
+  (vali/rule (vali/max-length? username const/max-about-length)
              [:username (str "Username cannot be more than "
-                             *max-username-length*
+                             const/max-username-length
                              " characters.")])
   (valid-email? email)
   (valid-password? password password-confirm)
@@ -105,7 +97,7 @@
 
 (defn- save-user! [{:as user}]
   (let [now (nt/long-now)
-        args (flatten (cons (user-key (:username user))
+        args (flatten (cons (const/user-key (:username user))
                             (seq (assoc user :updated_at now))))]
     (apply redis/hmset args)))
 
@@ -114,8 +106,8 @@
     (redis/with-server db/prod-redis
       (redis/atomically
        (save-user! final)
-       (redis/set (token-key (:token final)) username)
-       (redis/set (email-key (:email final)) username)))
+       (redis/set (const/token-key (:token final)) username)
+       (redis/set (const/email-key (:email final)) username)))
     final))
 
 (defn create-session! [username]
@@ -126,13 +118,13 @@
         token (:token user)]
     (redis/with-server db/prod-redis
       (redis/atomically
-       (redis/del (token-key token))
-       (redis/hdel (user-key username) :token)))))
+       (redis/del (const/token-key token))
+       (redis/hdel (const/user-key username) :token)))))
 
 (defn update-password! [user provo]
   (if (valid-new-password? user provo)
     (redis/with-server db/prod-redis
-      (redis/hset (user-key (:username user))
+      (redis/hset (const/user-key (:username user))
                   :password
                   (crypto/gen-hash (:password provo))))))
 
@@ -143,16 +135,16 @@
     (if (valid-email? new-email)
       (redis/with-server db/prod-redis
         (redis/atomically
-         (redis/hset (user-key username) :email new-email)
-         (redis/del (email-key old-email))
-         (redis/set (email-key new-email) username))))))
+         (redis/hset (const/user-key username) :email new-email)
+         (redis/del (const/email-key old-email))
+         (redis/set (const/email-key new-email) username))))))
 
 (defn update-about! [user provo]
   (let [about (:about provo)
         username (:username user)]
     (if (valid-about? about)
       (redis/with-server db/prod-redis
-        (redis/hset (user-key username)
+        (redis/hset (const/user-key username)
                     :about
                     (:about provo))))))
 
