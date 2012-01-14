@@ -93,7 +93,7 @@
         (common/layout (post-details now post))))))
 
 (defpage [:post "/item/:id/comments"] {:as args}
-  (let [post (post/get-post id)
+  (let [post (post/get-post (get args "id"))
         user (user/logged-in-user)]
     (if post
       (let [comment-id (comment/create-comment! post user args)]
