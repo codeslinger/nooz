@@ -46,8 +46,8 @@
     (redis/with-server db/prod-redis
       (record-comment! post comment)
       (update-comment-count! (get post "id"))
-      (record-comment-for-user! comment (get post "id") user time)
-      (get comment "id"))))
+      (record-comment-for-user! comment (get post "id") user time))
+    (get comment "id")))
 
 (defn create-comment! [post user {:keys [parent comment] :as args}]
   (if (valid-comment? args)
