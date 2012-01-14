@@ -93,15 +93,15 @@
         (common/layout (post-details now post))))))
 
 (defpage [:post "/item/:id/comments"] {:as args}
-  (let [post (post/get-post (get args "id"))
+  (let [post (post/get-post (:id args))
         user (user/logged-in-user)]
     (if post
       (let [comment-id (comment/create-comment! post user args)]
         (if comment-id
-          (resp/redirect (str "/item/" (:id post) "/comments/" comment-id))
+          (resp/redirect (str "/item/" (get post "id") "/comment/" comment-id))
           (do
             (common/boo! "There was a problem submitting your comment.")
-            (resp/redirect (str "/item/" (:id post))))))
+            (resp/redirect (str "/item/" (get post "id"))))))
       (common/borked "Sorry, we could not find the requested item."))))
 
 (defpage "/submit" {:as post}

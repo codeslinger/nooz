@@ -4,6 +4,7 @@
             :dev-dependencies [[swank-clojure "1.4.0-SNAPSHOT"]]
             :dependencies [[org.clojure/clojure "1.2.1"]
                            [org.clojure/clojure-contrib "1.2.0"]
+                           [clj-stacktrace "0.2.4"]
                            [ring "1.0.0-RC1"]
                            [noir "1.2.1"]
                            [clj-time "0.3.2"]

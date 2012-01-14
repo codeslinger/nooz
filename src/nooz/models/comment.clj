@@ -1,8 +1,10 @@
 (ns nooz.models.comment
-  (:require [noir.validation :as vali]
+  (:require [clojure.contrib.json :as json]
+            [noir.validation :as vali]
             [noir.session :as session]
             [redis.core :as redis]
             [nooz.constants :as const]
+            [nooz.crypto :as crypto]
             [nooz.time :as nt]
             [nooz.db :as db]
             [nooz.models.post :as post]))
@@ -17,15 +19,17 @@
 
 (defn- record-comment! [post comment]
   (let [key (const/post-comments-key (get post "id"))]
-    (redis/hset key (get comment "id") (to-json comment))))
-
-(defn- record-comment-for-user! [comment post_id user time]
-  (let [username (:username user)
-        comment-id (get comment "id")]
-    (redis/zadd (const/user-comments-key username) (str post_id "|" comment_id))))
+    (redis/hset key (get comment "id") (json/json-str comment))))
 
 (defn- update-comment-count! [id]
-  (redis/hincrby (post/post-key id) "comments" 1))
+  (redis/hincrby (const/post-key id) "comments" 1))
+
+(defn- record-comment-for-user! [comment post-id user time]
+  (let [username (:username user)
+        comment-id (get comment "id")]
+    (redis/zadd (const/user-comments-key username)
+                time
+                (str post-id "|" comment-id))))
 
 (defn- create-comment-record [user parent_id content time]
   (-> {}
@@ -40,14 +44,14 @@
 (defn- save-comment! [user post time parent comment]
   (let [comment (create-comment-record user parent comment time)]
     (redis/with-server db/prod-redis
-      (record-comment! comment)
+      (record-comment! post comment)
       (update-comment-count! (get post "id"))
-      (record-comment-for-user! comment user time))))
+      (record-comment-for-user! comment (get post "id") user time)
+      (get comment "id"))))
 
 (defn create-comment! [post user {:keys [parent comment] :as args}]
   (if (valid-comment? args)
-    (let [now nt/long-now]
-      (save-comment! user post now parent comment))))
+    (save-comment! user post (nt/long-now) parent comment)))
 
 (defn get-comment-count-for-user [user] 0)
 
