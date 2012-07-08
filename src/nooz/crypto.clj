@@ -9,7 +9,8 @@
            java.security.SecureRandom
            java.security.MessageDigest
            java.math.BigInteger
-           java.util.Random))
+           java.util.Random
+           java.nio.ByteBuffer))
 
 (def ^{:private true
        :doc "Algorithm to seed random numbers."}
@@ -18,18 +19,6 @@
 (def ^{:private true} rando (new Random))
 (def ^{:private true} idkey "nextid")
 (def ^{:private true} epochStart 1387263000)
-
-(defn gen-id
-  "Generate a random unique ID."
-  ([]
-     (let [ms (- (nt/long-now) epochStart)
-           r (.nextLong rando)
-           id (mod (redis/with-server db/prod-redis (redis/incr idkey))
-                   1024)]
-       (bit-or
-        (bit-or (bit-shift-left (bit-and ms 0x000001FFFFFFFFFF) 23)
-                (bit-shift-left (bit-and r  0x0000000000001FFF) 10))
-        (bit-and id 0x00000000000003FF)))))
 
 (defn gen-salt
   "Generate a salt for BCrypt's hashing routines."
@@ -74,3 +63,22 @@
 (defn gen-confirmation-token []
   (let [hashbytes (gen-random-hash 16)]
     (wrap-web-safe (codec/base64-encode hashbytes))))
+
+(defn long-to-web-safe [val]
+  (let [b (. ByteBuffer allocate 8)]
+    (.putLong b val)
+    (wrap-web-safe (codec/base64-encode (.array b)))))
+
+(defn gen-id
+  "Generate a random unique ID."
+  ([]
+     (let [ms (- (nt/long-now) epochStart)
+           r  (.nextLong rando)
+           id (mod (redis/with-server db/prod-redis
+                     (redis/incr idkey))
+                   1024)]
+       (long-to-web-safe
+        (bit-or
+         (bit-or (bit-shift-left (bit-and ms 0x000001FFFFFFFFFF) 23)
+                 (bit-shift-left (bit-and r  0x0000000000001FFF) 10))
+         (bit-and id 0x00000000000003FF))))))
