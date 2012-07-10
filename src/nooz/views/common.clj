@@ -53,7 +53,7 @@
        [:div.content body]
        [:footer
         [:p
-         [:span "&copy; 2011 " (link-to "http://cbcg.net/" "cipher block chain gang")]
+         [:span "&copy; 2011-2012 " (link-to "http://cbcg.net/" "cipher block chain gang")]
          [:span " | "]
          [:span (link-to "http://github.com/codeslinger/nooz" "source")]]]]])))
 
