@@ -12,7 +12,7 @@ lein run
 
 ## License
 
-Copyright (c) 2011, Toby DiPasquale <toby@cbcg.net>
+Copyright (c) 2011-2012, Toby DiPasquale <toby@cbcg.net>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
