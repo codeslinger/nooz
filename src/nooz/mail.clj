@@ -1,6 +1,6 @@
 (ns nooz.mail
   (:require [postal.core :as mail])
-  (:use [clojure.contrib.strint :only [<<]]
+  (:use [clojure.core.strint :only [<<]]
         [nooz.constants :only [app-name app-host]]))
 
 (defn registration-message [user name host]

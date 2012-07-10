@@ -1,5 +1,5 @@
 (ns nooz.models.comment
-  (:require [clojure.contrib.json :as json]
+  (:require [clojure.data.json :as json]
             [noir.validation :as vali]
             [noir.session :as session]
             [redis.core :as redis]

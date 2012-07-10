@@ -1,7 +1,6 @@
 (ns nooz.crypto
   (:require [ring.util.codec :as codec]
             [clojure.string :as s]
-            [clojure.contrib.str-utils :as str]
             [redis.core :as redis]
             [nooz.time :as nt]
             [nooz.db :as db])
@@ -12,10 +11,7 @@
            java.util.Random
            java.nio.ByteBuffer))
 
-(def ^{:private true
-       :doc "Algorithm to seed random numbers."}
-     seed-algorithm
-     "SHA1PRNG")
+(def ^{:private true} seed-algorithm "SHA1PRNG")
 (def ^{:private true} rando (new Random))
 (def ^{:private true} idkey "nextid")
 (def ^{:private true} epochStart 1387263000)
@@ -47,10 +43,10 @@
     seed))
 
 (defn wrap-web-safe [raw]
-  (s/replace (str/re-gsub #"/" "_" (str/re-gsub #"\+" "-" raw)) "=" ""))
+  (s/replace (s/replace (s/replace raw "+" "-") "/" "_") "=" ""))
 
 (defn unwrap-web-safe [wrapped]
-  (let [unwrapped (str/re-gsub #"-" "+" (str/re-gsub #"_" "/" wrapped))
+  (let [unwrapped (s/replace (s/replace wrapped "_" "/") "-" "+")
         eqs (seq (repeat (- 4 (rem (.length unwrapped) 4)) "="))]
     (s/join (flatten [unwrapped eqs]))))
 

@@ -1,5 +1,5 @@
 (ns nooz.time
-  (:require [clojure.contrib.math :as math]
+  (:require [clojure.math.numeric-tower :as math]
             [clj-time.core :as core]
             [clj-time.coerce :as coerce]
             [clj-time.format :as format]))

@@ -3,6 +3,9 @@
             ;; :local-repo-classpath true
             :dev-dependencies [[swank-clojure "1.4.2"]]
             :dependencies [[org.clojure/clojure "1.4.0"]
+                           [org.clojure/core.incubator "0.1.1"]
+                           [org.clojure/data.json "0.1.2"]
+                           [org.clojure/math.numeric-tower "0.0.1"]
                            [clj-stacktrace "0.2.4"]
                            [ring "1.1.1"]
                            [noir "1.2.2"]
