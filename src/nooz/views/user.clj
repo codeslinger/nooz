@@ -103,9 +103,6 @@
         [:td [:strong "Member for"]]
         [:td (nt/human-time (nt/from-long (:created_at user)))]]
        [:tr
-        [:td [:strong "Score"]]
-        [:td (:score user)]]
-       [:tr
         [:td [:strong "Submissions"]]
         (let [submissions (post/get-post-count-for-user user)]
           (if (= 0 submissions)

@@ -47,9 +47,7 @@
 
 (defn valid-email? [email]
   (vali/rule (vali/max-length? email const/max-email-length)
-             [:email (str "Too long. "
-                          const/max-email-length
-                          " characters or less, please.")])
+             [:email (str "Too long. " const/max-email-length " characters or less, please.")])
   (vali/rule (or (vali/errors? :email)
                  (vali/is-email? email))
              [:email "Email address is in an invalid format."])
@@ -60,9 +58,7 @@
 
 (defn valid-about? [about]
   (vali/rule (vali/max-length? about const/max-about-length)
-             [:about (str "Too long. "
-                          const/max-about-length
-                          " characters or less.")])
+             [:about (str "Too long. " const/max-about-length " characters or less.")])
   (not (vali/errors? :about)))
 
 (defn valid-new-user? [{:keys [username
@@ -72,27 +68,20 @@
   (vali/rule (empty? (get-user username))
              [:username "That username is already taken"])
   (vali/rule (vali/min-length? username const/min-username-length)
-             [:username (str "Username must be at least "
-                             const/min-username-length
-                             " characters.")])
+             [:username (str "Username must be at least " const/min-username-length " characters.")])
   (vali/rule (vali/max-length? username const/max-about-length)
-             [:username (str "Username cannot be more than "
-                             const/max-username-length
-                             " characters.")])
+             [:username (str "Username cannot be more than " const/max-username-length " characters.")])
   (valid-email? email)
   (valid-password? password password-confirm)
   (not (vali/errors? :username :email :password)))
 
-(defn- create-user-record [{:keys [username
-                                   email
-                                   password] :as user}]
+(defn- create-user-record [{:keys [username email password] :as user}]
   (let [now (nt/long-now)]
     (-> {}
         (assoc :username username)
         (assoc :email email)
         (assoc :password (crypto/gen-hash password))
         (assoc :created_at now)
-        (assoc :score 0)
         (assoc :token (crypto/gen-confirmation-token)))))
 
 (defn- save-user! [{:as user}]
@@ -156,9 +145,7 @@
         cur-password (:password user)]
     (if-not (empty? user)
       (if-not (account-confirmed? user)
-        (vali/set-error
-         :username
-         "You need to confirm your email account before logging in. Please check your email for your confirmation link.")
+        (vali/set-error :username "You need to confirm your email account before logging in. Please check your email for your confirmation link.")
         (if (crypto/compare-hashes password cur-password)
           (create-session! username)
           (vali/set-error :username "Invalid username or password.")))
@@ -174,5 +161,4 @@
 
 (defn gravatar-url [user]
   (let [canonical (.toLowerCase (.trim (:email user)))]
-    (format "http://gravatar.com/avatar/%s?s=48&d=mm"
-            (crypto/md5 canonical))))
+    (format "http://gravatar.com/avatar/%s?s=48&d=mm" (crypto/md5 canonical))))
