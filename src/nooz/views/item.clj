@@ -43,7 +43,7 @@
         created_at (Long. (get post "created_at"))]
     [:div.clearfix.post
      [:div.span12
-      (link-to {:class "title"} url (h title))
+      (link-to {:class "title" :target "_blank"} url (h title))
       [:span.dom (str " (" (get-host url) ")")]]
      [:div.subtext
       [:span "posted by"]
