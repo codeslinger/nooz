@@ -21,13 +21,7 @@
   (redis/with-server db/prod-redis
     (nil? (redis/get (const/url-key (get post "url"))))))
 
-(defn- user-can-post? [{:keys [username] :as user}]
-  (redis/with-server db/prod-redis
-    (nil? (redis/get (const/user-repost-key username)))))
-
 (defn- valid-new-post? [{:keys [title url] :as post} user]
-  (vali/rule (user-can-post? user)
-             [:title "You're posting too fast. Slow down, chief."])
   (vali/rule (and (vali/has-value? title)
                   (vali/min-length? title const/min-title-length))
              [:title (str "Title must be at least " const/min-title-length " characters.")])
@@ -70,11 +64,6 @@
                const/url-repost-barrier-seconds
                (get post "id")))
 
-(defn- install-repost-barrier! [user]
-  (redis/setex (const/user-repost-key (:username user))
-               const/user-repost-barrier-seconds
-               "1"))
-
 (defn- create-post-record [post user time]
   (-> {}
       (assoc "id" (crypto/gen-id))
@@ -93,7 +82,6 @@
       (add-post-chronologically! post time)
       (add-post-by-rank! post time)
       (create-url-barrier! post)
-      (install-repost-barrier! user)
       post)))
 
 (defn create-post! [post user]
